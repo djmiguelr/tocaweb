@@ -13,11 +13,12 @@ export function EntrevistasPage() {
     const loadEntrevistas = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const data = await apiService.getEntrevistas();
-        setEntrevistas(data);
+        setEntrevistas(data || []);
       } catch (err) {
         console.error('Error cargando entrevistas:', err);
-        setError('Error al cargar las entrevistas');
+        setError('Error al cargar las entrevistas. Por favor, intenta nuevamente.');
       } finally {
         setIsLoading(false);
       }
@@ -25,6 +26,44 @@ export function EntrevistasPage() {
 
     loadEntrevistas();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-20 pb-12 bg-gradient-to-b from-black/0 via-black/5 to-black/10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {[1, 2, 3].map((index) => (
+              <div key={index} className="bg-white/5 rounded-2xl overflow-hidden animate-pulse">
+                <div className="aspect-[9/16] bg-white/10" />
+                <div className="p-6">
+                  <div className="h-6 bg-white/10 rounded mb-3" />
+                  <div className="h-4 bg-white/10 rounded w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-20 pb-12 bg-gradient-to-b from-black/0 via-black/5 to-black/10">
+        <div className="container mx-auto px-4">
+          <div className="bg-red-500/10 border border-red-500 rounded-xl p-6 text-center max-w-lg mx-auto">
+            <p className="text-red-500 font-medium">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 pb-12 bg-gradient-to-b from-black/0 via-black/5 to-black/10">

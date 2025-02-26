@@ -7,6 +7,8 @@ import { HomePage } from './pages/HomePage';
 import { TocaExitosPage } from './pages/TocaExitos';
 import { NewsPage } from './pages/NewsPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
+import { EntrevistasPage } from './pages/EntrevistasPage';
+import { EntrevistaDetailPage } from './pages/EntrevistaDetailPage';
 
 // Importar estilos
 import './styles/scrollbar-hide.css';
@@ -31,6 +33,8 @@ export function App() {
                 <Route path="/toca-exitos" element={<TocaExitosPage />} />
                 <Route path="/noticias" element={<NewsPage />} />
                 <Route path="/noticias/:slug" element={<NewsDetailPage />} />
+                <Route path="/entrevistas" element={<EntrevistasPage />} />
+                <Route path="/entrevistas/:slug" element={<EntrevistaDetailPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>

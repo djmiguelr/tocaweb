@@ -13,7 +13,7 @@ const navigation = [
   { label: 'Noticias', path: '/noticias' },
   { label: 'TocaExitos', path: '/toca-exitos' },
   { label: 'Locutores', path: '/locutores' },
-  { label: 'TocaEntrevistas', path: '/toca-entrevistas' },
+  { label: 'TocaEntrevistas', path: '/entrevistas' },
   { label: 'Contacto', path: '/contacto' }
 ];
 
