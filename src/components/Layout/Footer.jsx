@@ -105,7 +105,7 @@ export function Footer() {
     if (!selectedCity?.apps) return null;
 
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-row gap-4 justify-center lg:justify-start">
         {selectedCity.apps.android && (
           <motion.a
             href={selectedCity.apps.android}

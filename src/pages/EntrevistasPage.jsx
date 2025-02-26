@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { BiPlay } from 'react-icons/bi';
+import { BiPlay, BiArrowBack } from 'react-icons/bi';
 import { apiService } from '../services/api';
 
 export function EntrevistasPage() {
@@ -77,7 +77,7 @@ export function EntrevistasPage() {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {entrevistas.map((item, index) => (
             <motion.article
               key={item.id}
@@ -117,4 +117,4 @@ export function EntrevistasPage() {
       </div>
     </div>
   );
-} 
+}

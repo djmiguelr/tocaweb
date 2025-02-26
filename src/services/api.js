@@ -380,6 +380,34 @@ const apiService = {
     }
   },
 
+  async getNextNews(currentSlug) {
+    try {
+      const response = await api.get('/noticias', {
+        params: {
+          'filters[slug][$ne]': currentSlug,
+          'populate[Imagendestacada][fields]': 'url',
+          'populate[fields][0]': 'title',
+          'populate[fields][1]': 'categoria',
+          'populate[fields][2]': 'contenido',
+          'populate[fields][3]': 'Fechapublicacion',
+          'populate[fields][4]': 'slug',
+          'sort[0]': 'Fechapublicacion:desc',
+          'pagination[pageSize]': 1
+        }
+      });
+
+      if (!response.data?.data?.[0]) {
+        return null;
+      }
+
+      const processedNews = processNewsData([response.data.data[0]]);
+      return processedNews[0] || null;
+    } catch (error) {
+      console.error('Error al obtener siguiente noticia:', error);
+      return null;
+    }
+  },
+
   async getHeaderInfo() {
     try {
       const response = await api.get('/header', {
