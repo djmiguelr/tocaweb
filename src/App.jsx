@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { CityProvider } from './context/CityContext';
 import { PlayerProvider } from './context/PlayerContext';
 import { HeaderProvider } from './context/HeaderContext';
-import { Layout } from './components/Layout';
+import { Layout } from './components/Layout/Layout';
 import { HomePage } from './pages/HomePage';
 import { TocaExitosPage } from './pages/TocaExitos';
 import { NewsPage } from './pages/NewsPage';
