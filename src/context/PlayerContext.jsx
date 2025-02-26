@@ -1,12 +1,21 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import { BASE_URL } from '../services/api';
+import { constants } from '../services/api';
 
-// Create context
+// Crear el contexto
 const PlayerContext = createContext(null);
 
-// Create provider component
-const PlayerProvider = ({ children }) => {
-  // States
+// Hook personalizado
+function usePlayer() {
+  const context = useContext(PlayerContext);
+  if (!context) {
+    throw new Error('usePlayer debe usarse dentro de un PlayerProvider');
+  }
+  return context;
+}
+
+// Provider Component
+export function PlayerProvider({ children }) {
+  // Estados
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isLiveStream, setIsLiveStream] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -16,145 +25,169 @@ const PlayerProvider = ({ children }) => {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  // Refs
+  // Referencias
   const audioRef = useRef(null);
-  const playPromiseRef = useRef(null);
-  const hasInteractedRef = useRef(false);
 
-  const setupAudio = useCallback(async (url, options = {}) => {
-    try {
-      if (!url) {
-        throw new Error('URL de audio no válida');
+  // Añadir estado para controlar si hubo interacción
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+
+  // Inicializar el reproductor de audio
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.preload = 'auto';
+      
+      // Configurar eventos del audio
+      audioRef.current.addEventListener('playing', () => setIsPlaying(true));
+      audioRef.current.addEventListener('pause', () => setIsPlaying(false));
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setCurrentTrack(null);
+      });
+      audioRef.current.addEventListener('error', (e) => {
+        console.error('Error en audio:', e);
+        if (!hasUserInteracted) {
+          setAutoplayBlocked(true);
+        } else {
+          setError('Error al reproducir el audio');
+        }
+        setIsPlaying(false);
+      });
+    }
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
       }
+    };
+  }, [hasUserInteracted]);
 
+  // Función para volver a la transmisión en vivo
+  const returnToLive = useCallback(async (city) => {
+    if (!city?.stream_url) {
+      setError('URL de stream no disponible');
+      return;
+    }
+
+    try {
       setIsLoading(true);
       setError(null);
 
-      const currentAudio = audioRef.current;
-      if (!currentAudio) {
-        throw new Error('Reproductor de audio no inicializado');
+      // Asegurarse de que audioRef existe
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+        audioRef.current.preload = 'auto';
       }
 
-      // Ensure URL is properly formatted
-      const formattedUrl = url.startsWith('http') ? url : `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-      currentAudio.src = formattedUrl;
-      currentAudio.crossOrigin = 'anonymous';
-      
-      // Add event listeners for error handling
-      const errorHandler = (e) => {
-        console.error('Audio error:', e);
-        setError('Error en la reproducción del audio');
-        setIsPlaying(false);
-      };
-      
-      currentAudio.addEventListener('error', errorHandler);
-      await currentAudio.load();
-      currentAudio.removeEventListener('error', errorHandler);
-      
-      if (options.autoplay && hasInteractedRef.current) {
-        try {
-          playPromiseRef.current = currentAudio.play();
-          await playPromiseRef.current;
-          setIsPlaying(true);
-        } catch (playError) {
-          if (playError.name === 'NotAllowedError') {
-            throw new Error('Reproducción bloqueada. Haz clic para reproducir.');
-          } else if (playError.name === 'AbortError') {
-            throw new Error('La conexión al stream fue interrumpida. Intente nuevamente.');
-          }
-          throw playError;
-        }
+      // Detener cualquier reproducción actual
+      audioRef.current.pause();
+      audioRef.current.src = '';
+
+      // Configurar nuevo stream
+      audioRef.current.src = city.stream_url;
+
+      if (hasUserInteracted) {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } else {
+        setAutoplayBlocked(true);
       }
-    } catch (error) {
-      console.error('Error setting up audio:', error);
-      setError(error.message || 'Error al reproducir el audio');
-      setIsPlaying(false);
-      throw error;
+      
+      setIsLiveStream(true);
+      setCurrentTrack(null);
+    } catch (err) {
+      console.error('Error al volver al stream:', err);
+      if (err.name === 'NotAllowedError') {
+        setAutoplayBlocked(true);
+      } else {
+        setError('No se pudo conectar al stream en vivo');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hasUserInteracted]);
+
+  // Función para reproducir una pista
+  const playTrack = useCallback(async (track) => {
+    if (!audioRef.current || !track?.song?.url) {
+      throw new Error('No se puede reproducir la pista');
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Detener cualquier reproducción actual
+      audioRef.current.pause();
+      audioRef.current.src = '';
+
+      // Configurar el nuevo audio
+      audioRef.current.src = track.song.url;
+      await audioRef.current.play();
+
+      setCurrentTrack(track);
+      setIsLiveStream(false);
+      setIsPlaying(true);
+    } catch (err) {
+      console.error('Error al reproducir track:', err);
+      setError('Error al reproducir la pista');
+      throw err;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const playTrack = useCallback(async (track) => {
-    try {
-      if (!track?.song?.url) {
-        throw new Error('URL de canción no válida');
-      }
-
-      setCurrentTrack(track);
-      setIsLiveStream(false);
-      
-      const audioUrl = track.song.url.startsWith('http') 
-        ? track.song.url 
-        : `${BASE_URL}${track.song.url.startsWith('/') ? '' : '/'}${track.song.url}`;
-      
-      await setupAudio(audioUrl, { 
-        crossOrigin: 'anonymous',
-        autoplay: true 
-      });
-    } catch (error) {
-      console.error('Error reproduciendo track:', error);
-      setError(error.message);
-      throw error;
-    }
-  }, [setupAudio]);
-
+  // Función para alternar play/pause
   const togglePlay = useCallback(async () => {
-    if (!audioRef.current?.src) return;
-    hasInteractedRef.current = true;
+    if (!audioRef.current) return;
 
     try {
-      setError(null);
-      
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
-        setIsLoading(true);
-        try {
-          playPromiseRef.current = audioRef.current.play();
-          await playPromiseRef.current;
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
           setIsPlaying(true);
-        } catch (playError) {
-          if (playError.name === 'NotAllowedError') {
-            throw new Error('Reproducción bloqueada. Haz clic para reproducir.');
-          }
-          throw playError;
-        } finally {
-          setIsLoading(false);
         }
       }
-    } catch (error) {
-      console.error('Error en toggle play/pause:', error);
-      setError(error.message || 'Error al reproducir');
-      setIsPlaying(false);
+    } catch (err) {
+      console.error('Error al reproducir:', err);
+      setError('Error al reproducir audio');
     }
   }, [isPlaying]);
 
-  const returnToLive = useCallback(async (city) => {
-    try {
-      if (!city?.stream_url) {
-        throw new Error('URL de transmisión no válida');
+  // Implementar playPreviousTrack si lo necesitas
+  const playPreviousTrack = useCallback(() => {
+    // Implementar lógica para reproducir la pista anterior
+    console.log('Función playPreviousTrack no implementada');
+  }, []);
+
+  // Implementar playNextTrack si lo necesitas
+  const playNextTrack = useCallback(() => {
+    // Implementar lógica para reproducir la siguiente pista
+    console.log('Función playNextTrack no implementada');
+  }, []);
+
+  // Función para manejar la primera interacción
+  const handleFirstInteraction = useCallback(async () => {
+    setHasUserInteracted(true);
+    setAutoplayBlocked(false);
+    
+    if (audioRef.current && audioRef.current.src && !isPlaying) {
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error('Error al reproducir después de interacción:', err);
+        setError('Error al reproducir el audio');
       }
-
-      setCurrentTrack(null);
-      setIsLiveStream(true);
-      
-      // Handle stream URL formatting
-      const streamUrl = city.stream_url.startsWith('http')
-        ? city.stream_url
-        : `${BASE_URL}${city.stream_url.startsWith('/') ? '' : '/'}${city.stream_url}`;
-
-      await setupAudio(streamUrl, { 
-        crossOrigin: 'anonymous',
-        autoplay: true 
-      });
-    } catch (error) {
-      console.error('Error conectando al stream en vivo:', error);
-      setError(error.message);
-      throw error;
     }
-  }, [setupAudio]);
+  }, [isPlaying]);
 
   const value = {
     currentTrack,
@@ -174,24 +207,18 @@ const PlayerProvider = ({ children }) => {
     duration,
     setDuration,
     audioRef,
-    playPromiseRef,
-    hasInteractedRef,
     playTrack,
     togglePlay,
-    setupAudio,
-    returnToLive
+    returnToLive,
+    playPreviousTrack,
+    playNextTrack,
+    autoplayBlocked,
+    handleFirstInteraction,
+    hasUserInteracted
   };
 
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
-// Create custom hook for using the context
-const usePlayer = () => {
-  const context = useContext(PlayerContext);
-  if (!context) {
-    throw new Error('usePlayer must be used within a PlayerProvider');
-  }
-  return context;
-};
-
-export { PlayerContext, PlayerProvider, usePlayer };
+// Exportar todo junto
+export { usePlayer };

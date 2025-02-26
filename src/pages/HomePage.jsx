@@ -5,9 +5,25 @@ import { BiPlay } from 'react-icons/bi';
 import { MainSlider } from '../components/Home/MainSlider';
 import { NewsSection } from '../components/Home/NewsSection';
 import { memo } from 'react';
+import { EntrevistasSection } from '../components/Home/EntrevistasSection';
 
 const HomePageComponent = memo(function HomePageComponent() {
-  const { selectedCity } = useCity();
+  const { selectedCity, isLoading, error } = useCity();
+
+  // Agregar logs para debuggear
+  console.log('HomePage render:', {
+    selectedCity,
+    isLoading,
+    error
+  });
+
+  if (isLoading) {
+    return <div>Cargando...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 pt-24 md:pt-28 pb-8 space-y-8 relative z-0">
@@ -23,6 +39,8 @@ const HomePageComponent = memo(function HomePageComponent() {
           </p>
         </div>
       ) : (
+        // Log para ver qué datos de la ciudad están disponibles
+        console.log('Rendering city data:', selectedCity) || 
         <div className="space-y-8">
           <section className="bg-gradient-to-r from-primary/20 to-[#1C1C1C] rounded-xl p-8">
             <div className="max-w-2xl">
@@ -48,6 +66,10 @@ const HomePageComponent = memo(function HomePageComponent() {
           </section>
 
           <section className="bg-[#1C1C1C] rounded-xl p-6">
+            <EntrevistasSection />
+          </section>
+
+          <section className="bg-[#1C1C1C] rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Nuestros Locutores</h2>
               <Link 
@@ -59,21 +81,6 @@ const HomePageComponent = memo(function HomePageComponent() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {/* Aquí irían las cards de locutores */}
-            </div>
-          </section>
-
-          <section className="bg-[#1C1C1C] rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white">TocaEntrevistas</h2>
-              <Link 
-                to="/toca-entrevistas"
-                className="text-sm text-primary hover:text-primary-hover transition-colors"
-              >
-                Ver todas
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Aquí irían las cards de entrevistas */}
             </div>
           </section>
         </div>

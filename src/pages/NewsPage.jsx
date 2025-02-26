@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { api } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { apiService } from '../services/api';
+import { motion } from 'framer-motion';
+import { BiTime, BiChevronRight, BiNews } from 'react-icons/bi';
 
 function NewsCard({ news }) {
   return (
@@ -37,54 +39,51 @@ export function NewsPage() {
   const [news, setNews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const { category } = useParams();
+  const [selectedCategory, setSelectedCategory] = useState('Todos');
 
   const categories = ['Todos', 'Entretenimiento', 'Nacional', 'Deportes', 'Mundo'];
 
   useEffect(() => {
-    if (category) {
-      setSelectedCategory(category.toLowerCase());
-    }
-  }, [category]);
-
-  useEffect(() => {
-    const fetchNews = async () => {
+    const loadNews = async () => {
       try {
         setIsLoading(true);
-        setError(null);
-        const data = await api.getNews();
-        const sortedNews = data
-          .filter(item => item?.attributes?.Fechapublicacion)
-          .sort((a, b) => 
-            new Date(b.attributes.Fechapublicacion) - new Date(a.attributes.Fechapublicacion)
-          );
+        let data;
+        
+        if (selectedCategory === 'Todos') {
+          data = await apiService.getNews();
+        } else {
+          data = await apiService.getNewsByCategory(selectedCategory);
+        }
 
-        setNews(sortedNews);
-      } catch (error) {
-        console.error('Error fetching news:', error);
+        console.log('Noticias cargadas:', data);
+        setNews(data);
+      } catch (err) {
+        console.error('Error cargando noticias:', err);
         setError('Error al cargar las noticias');
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchNews();
-  }, []);
-
-  const filteredNews = selectedCategory === 'all'
-    ? news
-    : news.filter(item => 
-        item.attributes.categoría.toLowerCase() === selectedCategory
-      );
+    loadNews();
+  }, [selectedCategory]);
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 pt-24 md:pt-28 pb-32">
-        <div className="animate-pulse space-y-8">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 bg-gray-800 rounded-lg"></div>
-          ))}
+      <div className="min-h-screen pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="animate-pulse bg-white/5 rounded-xl overflow-hidden">
+                <div className="h-48 bg-white/10" />
+                <div className="p-6 space-y-3">
+                  <div className="h-4 bg-white/10 rounded w-1/4" />
+                  <div className="h-6 bg-white/10 rounded w-3/4" />
+                  <div className="h-4 bg-white/10 rounded w-full" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -92,50 +91,123 @@ export function NewsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 pt-24 md:pt-28 pb-32">
-        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500">
-          {error}
+      <div className="min-h-screen pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-red-500/10 border border-red-500 rounded-xl p-6 text-center">
+              <p className="text-red-500 font-medium">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
+                Recargar página
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 pt-24 md:pt-28 pb-32">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-white mb-8">Noticias</h1>
-        
-        <div className="flex flex-wrap gap-4">
-          {categories.map(category => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category.toLowerCase())}
-              className={`px-6 py-2 rounded-full transition-all ${selectedCategory === category.toLowerCase()
-                ? 'bg-primary text-white'
-                : 'bg-[#1C1C1C] text-gray-400 hover:bg-primary/10 hover:text-primary'
-              }`}
+    <div className="min-h-screen pt-20 pb-12 bg-gradient-to-b from-black/0 via-black/5 to-black/10">
+      <div className="container mx-auto px-4">
+        <header className="py-12 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-white via-white to-primary bg-clip-text text-transparent mb-4">
+            Noticias
+          </h1>
+          <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto">
+            Mantente informado con las últimas noticias y acontecimientos más relevantes
+          </p>
+        </header>
+
+        <nav className="mb-12 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-3 md:gap-4 md:justify-center min-w-max">
+            {categories.map(category => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-3 rounded-full transition-all transform hover:scale-105 ${
+                  selectedCategory === category
+                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {news.map((item, index) => (
+            <motion.article
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="group bg-white/5 backdrop-blur-sm rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20"
             >
-              {category}
-            </button>
+              <Link to={`/noticias/${item.slug}`} className="block">
+                <div className="relative aspect-[16/9] overflow-hidden">
+                  {item.imagen?.url ? (
+                    <img
+                      src={item.imagen.url}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <BiNews className="w-12 h-12 text-primary/50" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-full shadow-lg">
+                      {item.categoria}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
+                    <BiTime className="w-4 h-4" />
+                    {item.fechaPublicacion ? (
+                      new Date(item.fechaPublicacion).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })
+                    ) : 'Fecha no disponible'}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-400 line-clamp-3">
+                    {item.contenido.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                  </p>
+                </div>
+              </Link>
+            </motion.article>
           ))}
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredNews.map(news => (
-          <Link key={news.id} to={`/noticias/${news.attributes.slug}`}>
-            <NewsCard news={news} />
-          </Link>
-        ))}
+        {news.length === 0 && !isLoading && (
+          <div className="text-center py-20">
+            <div className="bg-white/5 rounded-2xl p-8 max-w-2xl mx-auto">
+              <BiNews className="w-16 h-16 text-primary/50 mx-auto mb-4" />
+              <p className="text-gray-400 text-lg mb-4">
+                No hay noticias disponibles en esta categoría.
+              </p>
+              <button
+                onClick={() => setSelectedCategory('Todos')}
+                className="px-6 py-2 bg-primary text-white rounded-full hover:bg-primary-dark transition-colors"
+              >
+                Ver todas las noticias
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {filteredNews.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">
-            No hay noticias disponibles en esta categoría.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

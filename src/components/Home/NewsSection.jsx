@@ -1,71 +1,28 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { api } from '../../services/api';
-
-function NewsCard({ news }) {
-  return (
-    <div className="bg-[#1C1C1C] rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
-      <div className="relative h-48 overflow-hidden">
-        <img
-          src={news.attributes.Imagendestacada?.url}
-          alt={news.attributes.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <div className="absolute top-4 left-4 bg-primary px-3 py-1 rounded-full">
-          <span className="text-sm text-white font-medium">
-            {news.attributes.categoría}
-          </span>
-        </div>
-      </div>
-      <div className="p-4">
-        <h3 className="text-xl text-white font-bold mt-2 line-clamp-2 group-hover:text-primary transition-colors">
-          {news.attributes.title}
-        </h3>
-        <p className="text-sm text-gray-400 mt-2">
-          {new Date(news.attributes.Fechapublicacion).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </p>
-      </div>
-    </div>
-  );
-}
+import { motion } from 'framer-motion';
+import { apiService } from '../../services/api';
+import { BiTime, BiChevronRight } from 'react-icons/bi';
 
 export function NewsSection() {
   const [news, setNews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [latestNews, setLatestNews] = useState([]);
-  const categories = ['Entretenimiento', 'Nacional', 'Deportes', 'Mundo'];
 
   useEffect(() => {
     const loadNews = async () => {
       try {
         setIsLoading(true);
-        setError(null);
-        const data = await api.getNews();
-        if (!data || !Array.isArray(data)) {
-          throw new Error('Invalid data format received from API');
+        const data = await apiService.getNews();
+        console.log('Noticias cargadas en sección:', data);
+        if (Array.isArray(data) && data.length > 0) {
+          setNews(data.slice(0, 6)); // Solo las 6 más recientes
+        } else {
+          setError('No hay noticias disponibles');
         }
-        const validNews = data.filter(item => {
-          const hasValidImage = item?.attributes?.Imagendestacada?.data?.attributes?.url;
-          return (
-            item?.attributes?.Fechapublicacion &&
-            item?.attributes?.title &&
-            item?.attributes?.categoría &&
-            item?.attributes?.slug &&
-            hasValidImage
-          );
-        });
-        const sortedNews = validNews
-          .sort((a, b) => new Date(b.attributes.Fechapublicacion) - new Date(a.attributes.Fechapublicacion));
-        setNews(sortedNews);
-        setLatestNews(sortedNews.slice(0, 6));
-      } catch (error) {
-        console.error('Error loading news:', error);
-        setError('Error al cargar las noticias. Por favor, intente más tarde.');
+      } catch (err) {
+        console.error('Error cargando noticias:', err);
+        setError('Error al cargar las noticias');
       } finally {
         setIsLoading(false);
       }
@@ -74,29 +31,39 @@ export function NewsSection() {
     loadNews();
   }, []);
 
-  const getNewsByCategory = (category) => {
-    return news
-      .filter(item => item.attributes.categoría === category)
-      .slice(0, 3);
-  };
-
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="animate-pulse space-y-8">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 bg-gray-800 rounded-lg"></div>
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="animate-pulse bg-white/5 rounded-xl overflow-hidden">
+            <div className="h-48 bg-white/10" />
+            <div className="p-6 space-y-3">
+              <div className="h-4 bg-white/10 rounded w-1/4" />
+              <div className="h-6 bg-white/10 rounded w-3/4" />
+              <div className="h-4 bg-white/10 rounded w-full" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500">
-          {error}
+      <div className="bg-red-500/10 border border-red-500 rounded-xl p-6">
+        <div className="flex flex-col items-center text-center">
+          <p className="text-red-500 font-medium mb-2">
+            Error al cargar las noticias
+          </p>
+          <p className="text-sm text-red-400">
+            Por favor, intenta recargar la página
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Recargar página
+          </button>
         </div>
       </div>
     );
@@ -104,51 +71,68 @@ export function NewsSection() {
 
   if (!news.length) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">
-            No hay noticias disponibles en este momento.
-          </p>
-        </div>
+      <div className="bg-white/5 rounded-xl p-8 text-center">
+        <p className="text-gray-400">No hay noticias disponibles</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Últimas Noticias */}
-      <section className="mb-16">
-        <h2 className="text-3xl font-bold mb-8">Últimas Noticias</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {latestNews.map(news => (
-            <Link key={news.id} to={`/noticias/${news.attributes.slug}`}>
-              <NewsCard news={news} />
-            </Link>
-          ))}
-        </div>
-      </section>
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-white">Últimas Noticias</h2>
+        <Link 
+          to="/noticias"
+          className="flex items-center gap-2 text-primary hover:text-primary-hover transition-colors"
+        >
+          <span className="text-sm font-medium">Ver todas</span>
+          <BiChevronRight className="w-5 h-5" />
+        </Link>
+      </div>
 
-      {/* Secciones por Categoría */}
-      {categories.map(category => (
-        <section key={category} className="mb-16">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold">{category}</h2>
-            <Link
-              to={`/noticias/categoria/${category.toLowerCase()}`}
-              className="text-primary hover:text-primary-dark font-medium"
-            >
-              Ver más
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {news.map((item, index) => (
+          <motion.article
+            key={item.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="group bg-white/5 rounded-xl overflow-hidden hover:bg-white/10 transition-colors"
+          >
+            <Link to={`/noticias/${item.slug}`} className="block">
+              <div className="relative h-48 overflow-hidden">
+                {item.imagen?.url && (
+                  <img
+                    src={item.imagen.url}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                )}
+                <div className="absolute top-4 left-4">
+                  <span className="px-3 py-1 bg-primary text-white text-sm font-medium rounded-full">
+                    {item.categoria}
+                  </span>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-2 text-gray-400 text-sm mb-3">
+                  <BiTime className="w-4 h-4" />
+                  {item.fechaPublicacion ? (
+                    new Date(item.fechaPublicacion).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })
+                  ) : 'Fecha no disponible'}
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                  {item.title}
+                </h3>
+              </div>
             </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {getNewsByCategory(category).map(news => (
-              <Link key={news.id} to={`/noticias/${news.attributes.slug}`}>
-                <NewsCard news={news} />
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
+          </motion.article>
+        ))}
+      </div>
     </div>
   );
 }

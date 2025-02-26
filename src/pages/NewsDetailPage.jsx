@@ -1,57 +1,60 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { BASE_URL } from '../services/api';
+import { apiService } from '../services/api';
 import { BiArrowBack } from 'react-icons/bi';
 
 export function NewsDetailPage() {
+  const { slug } = useParams();
   const [news, setNews] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { slug } = useParams();
 
   useEffect(() => {
-    const fetchNewsDetail = async () => {
+    const loadNews = async () => {
+      if (!slug) {
+        setError('Slug no válido');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(
-          `${BASE_URL}/api/noticias?filters[slug][$eq]=${slug}&populate=*`
-        );
+        
+        console.log('Cargando noticia con slug:', slug);
+        const data = await apiService.getNewsBySlug(slug);
+        console.log('Datos de noticia recibidos:', data);
 
-        if (!response.ok) {
-          throw new Error('Error al cargar la noticia');
-        }
-
-        const { data } = await response.json();
-        if (!data || data.length === 0) {
+        if (!data) {
           throw new Error('Noticia no encontrada');
         }
 
-        setNews(data[0]);
-      } catch (error) {
-        console.error('Error fetching news detail:', error);
-        setError(error.message);
+        setNews(data);
+      } catch (err) {
+        console.error('Error cargando noticia:', err);
+        setError(err.message || 'Error al cargar la noticia');
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (slug) {
-      fetchNewsDetail();
-    }
+    loadNews();
   }, [slug]);
 
+  // Mostrar estado de carga
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 pt-24 md:pt-28 pb-32">
-        <div className="max-w-4xl mx-auto">
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-gray-800 rounded w-3/4"></div>
-            <div className="h-96 bg-gray-800 rounded"></div>
+      <div className="min-h-screen pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto animate-pulse">
+            <div className="h-8 bg-white/10 rounded mb-4 w-1/3" />
+            <div className="aspect-[21/9] bg-white/10 rounded mb-8" />
             <div className="space-y-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-4 bg-gray-800 rounded w-full"></div>
-              ))}
+              <div className="h-4 bg-white/10 rounded w-1/4" />
+              <div className="h-8 bg-white/10 rounded w-3/4" />
+              <div className="h-4 bg-white/10 rounded w-1/2" />
+              <div className="h-4 bg-white/10 rounded w-full" />
+              <div className="h-4 bg-white/10 rounded w-full" />
             </div>
           </div>
         </div>
@@ -59,67 +62,132 @@ export function NewsDetailPage() {
     );
   }
 
+  // Mostrar error
   if (error) {
     return (
-      <div className="container mx-auto px-4 pt-24 md:pt-28 pb-32">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500">
-            {error}
+      <div className="min-h-screen pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-red-500/10 border border-red-500 rounded-xl p-6 text-center">
+              <p className="text-red-500 font-medium">{error}</p>
+              <Link
+                to="/noticias"
+                className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mt-4"
+              >
+                <BiArrowBack className="w-5 h-5" />
+                Volver a noticias
+              </Link>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!news) return null;
+  // Mostrar noticia
+  if (!news) {
+    return (
+      <div className="min-h-screen pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-gray-400">Noticia no encontrada</p>
+            <Link
+              to="/noticias"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mt-4"
+            >
+              <BiArrowBack className="w-5 h-5" />
+              Volver a noticias
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 pt-24 md:pt-28 pb-32">
-      <div className="max-w-4xl mx-auto">
-        <Link
-          to="/noticias"
-          className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mb-8 transition-colors"
-        >
-          <BiArrowBack className="w-5 h-5" />
-          Volver a noticias
-        </Link>
-
-        <article className="space-y-8">
-          <header className="space-y-4">
-            <div className="inline-flex px-3 py-1 rounded-full bg-primary text-white text-sm">
-              {news.attributes.categoria}
+    <article className="min-h-screen pt-20 pb-12">
+      {/* Hero section con imagen de fondo */}
+      <div className="relative">
+        {news.imagen?.url && (
+          <>
+            <div className="absolute inset-0 overflow-hidden">
+              <img
+                src={news.imagen.url}
+                alt={news.title}
+                className="w-full h-full object-cover filter blur-lg opacity-30"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black via-black/95 to-black" />
             </div>
-            
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
-              {news.attributes.title}
-            </h1>
-            
-            <time 
-              className="text-gray-400"
-              dateTime={news.attributes.Fechapublicacion}
-            >
-              {new Date(news.attributes.Fechapublicacion).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}
-            </time>
-          </header>
+          </>
+        )}
 
-          <div className="aspect-video rounded-xl overflow-hidden bg-gray-800">
-            <img
-              src={news.attributes.Imagendestacada?.url}
-              alt={news.attributes.title}
-              className="w-full h-full object-cover"
-            />
+        <div className="container mx-auto px-4 relative">
+          <Link
+            to="/noticias"
+            className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mb-8 transition-all transform hover:-translate-x-2"
+          >
+            <BiArrowBack className="w-5 h-5" />
+            <span>Volver a noticias</span>
+          </Link>
+
+          <div className="max-w-4xl mx-auto">
+            <header className="py-12 text-center">
+              <span className="inline-block px-4 py-2 bg-primary text-white rounded-full mb-6 shadow-lg shadow-primary/25">
+                {news.categoria}
+              </span>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                {news.title}
+              </h1>
+              <time className="text-gray-400 text-lg">
+                {new Date(news.fechaPublicacion).toLocaleDateString('es-ES', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </time>
+            </header>
           </div>
+        </div>
+      </div>
+
+      {/* Contenido principal */}
+      <div className="container mx-auto px-4 mt-12">
+        <div className="max-w-4xl mx-auto">
+          {news.imagen?.url && (
+            <div className="aspect-[21/9] rounded-2xl overflow-hidden mb-12 shadow-2xl">
+              <img
+                src={news.imagen.url}
+                alt={news.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
 
           <div 
             className="prose prose-lg prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: news.attributes.contenido.replace(/\n/g, '<br>') }}
+            dangerouslySetInnerHTML={{ __html: news.contenido }}
           />
-        </article>
+
+          {/* Navegación entre artículos */}
+          <div className="mt-12 pt-8 border-t border-white/10">
+            <div className="flex justify-between items-center">
+              <Link
+                to="/noticias"
+                className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-colors"
+              >
+                <BiArrowBack className="w-5 h-5" />
+                Volver a noticias
+              </Link>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-full transition-colors"
+              >
+                Volver arriba
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </article>
   );
 }

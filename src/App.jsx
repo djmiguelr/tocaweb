@@ -1,10 +1,12 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CityProvider } from './context/CityContext';
 import { PlayerProvider } from './context/PlayerContext';
-import { Layout } from './components/Layout/Layout';
+import { HeaderProvider } from './context/HeaderContext';
+import { Layout } from './components/Layout';
 import { HomePage } from './pages/HomePage';
 import { TocaExitosPage } from './pages/TocaExitos';
-import { CitySelectorModal } from './components/Home/CitySelectorModal';
+import { NewsPage } from './pages/NewsPage';
+import { NewsDetailPage } from './pages/NewsDetailPage';
 
 // Importar estilos
 import './styles/scrollbar-hide.css';
@@ -19,20 +21,23 @@ const router = {
 
 export function App() {
   return (
-    <Router>
+    <HeaderProvider>
       <CityProvider>
         <PlayerProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/toca-exitos" element={<TocaExitosPage />} />
-              {/* Aquí irán más rutas cuando las implementemos */}
-            </Routes>
-          </Layout>
-          <CitySelectorModal />
+          <Router>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/toca-exitos" element={<TocaExitosPage />} />
+                <Route path="/noticias" element={<NewsPage />} />
+                <Route path="/noticias/:slug" element={<NewsDetailPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          </Router>
         </PlayerProvider>
       </CityProvider>
-    </Router>
+    </HeaderProvider>
   );
 }
 

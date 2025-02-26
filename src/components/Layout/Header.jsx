@@ -1,14 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCity } from '../../context/CityContext';
-import { BASE_URL } from '../../services/api';
+import { constants } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BiMenu, BiX, BiSearch } from 'react-icons/bi';
 import { BsWhatsapp } from 'react-icons/bs';
+import apiService from '../../services/api';
+import { useHeader } from '../../context/HeaderContext';
+
+const navigation = [
+  { label: 'Inicio', path: '/' },
+  { label: 'Noticias', path: '/noticias' },
+  { label: 'TocaExitos', path: '/toca-exitos' },
+  { label: 'Locutores', path: '/locutores' },
+  { label: 'TocaEntrevistas', path: '/toca-entrevistas' },
+  { label: 'Contacto', path: '/contacto' }
+];
 
 export function Header() {
   const { selectedCity } = useCity();
-  const [headerData, setHeaderData] = useState(null);
+  const { headerInfo } = useHeader();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -21,47 +32,29 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => {
-    const fetchHeaderData = async () => {
-      try {
-        const response = await fetch(`${BASE_URL}/api/header?populate=*`);
-        const data = await response.json();
-        setHeaderData(data.data);
-      } catch (error) {
-        console.error('Error fetching header data:', error);
-      }
-    };
-
-    fetchHeaderData();
-  }, []);
-
   const renderLogo = () => {
     if (selectedCity?.logo?.url) {
       return (
         <img 
-          src={`${BASE_URL}${selectedCity.logo.url}`} 
+          src={selectedCity.logo.url} 
           alt={selectedCity.name}
           className="h-10 md:h-12 w-auto"
         />
       );
     }
 
-    if (headerData?.logoprincipal?.url) {
+    if (headerInfo?.logo?.url) {
       return (
-        <img 
-          src={`${BASE_URL}${headerData.logoprincipal.url}`}
-          alt={headerData.Titulo || 'TocaStereo'}
-          className="h-10 md:h-12 w-auto"
+        <img
+          src={headerInfo.logo.url}
+          alt={headerInfo.title}
+          className="h-8 w-auto"
         />
       );
     }
 
     return (
-      <img 
-        src="/logo.svg" 
-        alt="TocaStereo" 
-        className="h-10 md:h-12"
-      />
+      <span className="text-xl font-bold">{headerInfo?.title || 'Toca Stereo'}</span>
     );
   };
 
@@ -78,18 +71,20 @@ export function Header() {
 
           {/* Navegación Desktop */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            <NavLink to="/">Inicio</NavLink>
-            <NavLink to="/secciones">Noticias</NavLink>
-            <NavLink to="/toca-exitos">TocaExitos</NavLink>
-            <NavLink to="/podcasts">Locutores</NavLink>
-            <NavLink to="/locutores">TocaEntrevistas</NavLink>
-            <NavLink to="/contacto">Contacto</NavLink>
+            {navigation.map((item) => (
+              <NavLink 
+                key={item.path} 
+                to={item.path}
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
           
           {/* Acciones */}
           <div className="flex items-center space-x-2 md:space-x-4">
             {selectedCity?.Redes?.map((red) => {
-              if (red.plataforma === 'Whatsapp') {
+              if (red?.plataforma === 'Whatsapp' && red?.URL) {
                 const whatsappUrl = red.URL.startsWith('+') 
                   ? `https://wa.me/${red.URL.replace('+', '')}`
                   : red.URL;
@@ -157,12 +152,15 @@ export function Header() {
               </div>
 
               <nav className="flex-1 overflow-y-auto py-8">
-                <MobileNavLink to="/" onClick={() => setIsMenuOpen(false)}>Inicio</MobileNavLink>
-                <MobileNavLink to="/secciones" onClick={() => setIsMenuOpen(false)}>Noticias</MobileNavLink>
-                <MobileNavLink to="/toca-exitos" onClick={() => setIsMenuOpen(false)}>TocaExitos</MobileNavLink>
-                <MobileNavLink to="/podcasts" onClick={() => setIsMenuOpen(false)}>Locutores</MobileNavLink>
-                <MobileNavLink to="/locutores" onClick={() => setIsMenuOpen(false)}>TocaEntrevistas</MobileNavLink>
-                <MobileNavLink to="/contacto" onClick={() => setIsMenuOpen(false)}>Contacto</MobileNavLink>
+                {navigation.map((item) => (
+                  <MobileNavLink 
+                    key={item.path} 
+                    to={item.path} 
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </MobileNavLink>
+                ))}
               </nav>
             </div>
           </motion.div>

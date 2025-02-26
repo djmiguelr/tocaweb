@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useCity } from '../../context/CityContext';
-import { BASE_URL } from '../../services/api';
+import { apiService, constants } from '../../services/api';
 import { motion } from 'framer-motion';
 import { BiPlay, BiPause } from 'react-icons/bi';
 import { usePlayer } from '../../context/PlayerContext';
@@ -31,44 +31,9 @@ export const TocaExitos = memo(function TocaExitos() {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(
-          `${BASE_URL}/api/ciudades?filters[documentId][$eq]=${selectedCity.documentId}&populate[TocaExitos][populate]=*`
-        );
-
-        if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const city = await apiService.getCity(selectedCity.documentId);
+        selectedCity.TocaExitos = city.TocaExitos;
         
-        if (!data?.data?.[0]?.attributes?.TocaExitos?.data) {
-          setError('No songs available for this city');
-          return;
-        }
-
-        const tocaExitosItems = data.data[0].attributes.TocaExitos.data;
-        
-        const processedTocaExitos = tocaExitosItems.map(item => ({
-          id: item.id,
-          documentId: item.attributes?.documentId || `toca-${item.id}`,
-          title: item.attributes?.title,
-          artist: item.attributes?.artist,
-          rank: item.attributes?.rank || 0,
-          cover: item.attributes?.cover?.data ? {
-            url: item.attributes.cover.data.attributes.url.startsWith('http')
-              ? item.attributes.cover.data.attributes.url
-              : `${BASE_URL}${item.attributes.cover.data.attributes.url}`,
-            documentId: item.attributes.cover.data.attributes.documentId
-          } : null,
-          song: item.attributes?.song?.data ? {
-            url: item.attributes.song.data.attributes.url.startsWith('http')
-              ? item.attributes.song.data.attributes.url
-              : `${BASE_URL}${item.attributes.song.data.attributes.url}`,
-            documentId: item.attributes.song.data.attributes.documentId
-          } : null
-        }));
-
-        selectedCity.TocaExitos = processedTocaExitos;
       } catch (err) {
         console.error('Error loading TocaExitos:', err);
         setError(err.message || 'Error loading songs');
@@ -109,17 +74,7 @@ export const TocaExitos = memo(function TocaExitos() {
 
     try {
       setLoadingTrackId(track.documentId);
-      await playTrack({
-        ...track,
-        cover: track.cover ? {
-          url: `${BASE_URL}${track.cover.url}`,
-          documentId: track.cover.documentId
-        } : null,
-        song: {
-          url: `${BASE_URL}${track.song.url}`,
-          documentId: track.song.documentId
-        }
-      });
+      await playTrack(track);
     } catch (err) {
       console.error('Error reproduciendo track:', err);
     } finally {
@@ -170,32 +125,32 @@ export const TocaExitos = memo(function TocaExitos() {
 
       <div className="relative overflow-x-auto pb-4 -mx-6 px-6">
         <div className="flex gap-4 snap-x snap-mandatory overflow-x-auto scrollbar-hide">
-          {tocaExitos.map((item, index) => (
+          {selectedCity?.TocaExitos?.map((exito, index) => (
             <motion.div
-              key={item.documentId}
+              key={`${exito.id}-${index}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
+              transition={{ delay: index * 0.1 }}
               className="flex-none w-[calc(50%-8px)] sm:w-[calc(50%-8px)] md:w-[calc(33.33%-11px)] lg:w-[calc(25%-12px)] xl:w-[calc(20%-13px)] snap-start"
             >
               <div className="bg-white/5 rounded-lg overflow-hidden hover:bg-white/10 transition-all duration-300 h-full">
                 <div className="p-4">
                   <div className="relative aspect-square mb-4">
                     <img
-                      src={item.cover?.url ? `${BASE_URL}${item.cover.url}` : '/placeholder-cover.jpg'}
-                      alt={item.title}
+                      src={exito.cover?.url || '/placeholder-cover.jpg'}
+                      alt={exito.title}
                       className="w-full h-full object-cover rounded-lg"
                       loading="lazy"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 transition-opacity rounded-lg">
                       <button
-                        onClick={() => handlePlay(item)}
-                        disabled={isPlayerLoading || loadingTrackId === item.documentId}
-                        className={`transform hover:scale-110 transition-all duration-300 ${(isPlayerLoading || loadingTrackId === item.documentId) ? 'opacity-50 cursor-wait' : ''}`}
+                        onClick={() => handlePlay(exito)}
+                        disabled={isPlayerLoading || loadingTrackId === exito.documentId}
+                        className={`transform hover:scale-110 transition-all duration-300 ${(isPlayerLoading || loadingTrackId === exito.documentId) ? 'opacity-50 cursor-wait' : ''}`}
                       >
-                        {loadingTrackId === item.documentId ? (
+                        {loadingTrackId === exito.documentId ? (
                           <div className="w-12 h-12 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : currentTrack?.documentId === item.documentId && isPlaying ? (
+                        ) : currentTrack?.documentId === exito.documentId && isPlaying ? (
                           <BiPause className="w-12 h-12 text-white" />
                         ) : (
                           <BiPlay className="w-12 h-12 text-white ml-1" />
@@ -205,11 +160,11 @@ export const TocaExitos = memo(function TocaExitos() {
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                      #{item.rank || index + 1}
+                      #{exito.rank || index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-medium truncate">{item.title}</h3>
-                      <p className="text-gray-400 text-sm truncate">{item.artist}</p>
+                      <h3 className="text-white font-medium truncate">{exito.title}</h3>
+                      <p className="text-gray-400 text-sm truncate">{exito.artist}</p>
                     </div>
                   </div>
                 </div>
