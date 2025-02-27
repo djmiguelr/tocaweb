@@ -5,6 +5,8 @@ import { BiArrowBack, BiShareAlt, BiCopy } from 'react-icons/bi';
 import { FaFacebookF, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
 import { RelatedNewsSection } from '../components/News/RelatedNewsSection';
 
 export function NewsDetailPage() {
@@ -141,11 +143,41 @@ export function NewsDetailPage() {
       setIsLoading(true);
       setError(null);
       
-      const data = await apiService.getNewsBySlug(newsSlug);
+      const response = await apiService.getNewsBySlug(newsSlug);
+      console.log('API Response:', response);
+
+      if (!response || typeof response !== 'object') {
+        console.error('Invalid API response:', response);
+        throw new Error('Error al cargar la noticia');
+      }
+
+      // Handle both direct response and nested data structure
+      const newsData = response.data?.data || response;
+      if (!newsData) {
+        throw new Error('Noticia no encontrada');
+      }
+
       const nextNewsData = await apiService.getNextNews(newsSlug);
       const relatedNewsData = await apiService.getRelatedNews(newsSlug);
       setRelatedNews(relatedNewsData || []);
-      console.log('Datos de noticia recibidos:', data);
+      
+      // Extract the news data with proper fallbacks
+      const data = {
+        id: newsData.id || newsData.documentId,
+        title: newsData.title || newsData.attributes?.title,
+        description: newsData.description || newsData.attributes?.description,
+        contenido: newsData.contenido || newsData.attributes?.contenido || '',
+        categoria: newsData.categoria || 
+                  newsData.attributes?.categoria?.data?.attributes?.nombre || 
+                  'General',
+        imagen: newsData.imagen || 
+                newsData.attributes?.imagen?.data?.attributes || 
+                null,
+        fecha: newsData.fecha || newsData.attributes?.fecha,
+        slug: newsData.slug || newsData.attributes?.slug
+      };
+      
+      console.log('Datos de noticia procesados:', data);
 
       if (!data) {
         throw new Error('Noticia no encontrada');
@@ -324,218 +356,148 @@ export function NewsDetailPage() {
   }
 
   return (
-    <article className="min-h-screen pt-20 pb-12 bg-gradient-to-b from-black via-black/95 to-black/90">
-      {/* Hero section with enhanced background handling */}
-      <div className="relative min-h-[50vh] flex items-center justify-center">
-        {news.imagen?.url && (
-          <>
-            <div className="absolute inset-0 overflow-hidden">
-              <img
-                src={news.imagen.url}
-                alt={news.title}
-                className="w-full h-full object-cover filter blur-lg opacity-20 transform scale-105 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-b from-black via-black/95 to-black" />
-            </div>
-          </>
-        )}
-
-        <div className="container mx-auto px-4 relative z-10">
-          {/* Enhanced back button with better positioning and animation */}
-          <Link
-            to="/noticias"
-            className="fixed top-24 left-4 md:left-8 z-10 group flex items-center gap-3 px-4 py-3 bg-black/90 hover:bg-primary backdrop-blur-lg rounded-xl text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-primary/25"
-            aria-label="Volver a noticias"
-          >
-            <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/10 group-hover:bg-white/20 transition-colors">
-              <BiArrowBack className="w-5 h-5 transform transition-transform group-hover:-translate-x-1" />
-            </span>
-            <span className="text-sm font-medium">Volver a noticias</span>
-          </Link>
-
-          <div className="max-w-4xl mx-auto">
-            {/* Enhanced share button with smoother animations */}
-            <div className="flex justify-end mb-4">
-              <div className="relative">
-                <button
-                  onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors transform hover:scale-105 active:scale-95"
-                  aria-label="Compartir noticia"
-                >
-                  <BiShareAlt className="w-5 h-5 text-white" />
-                </button>
-                <AnimatePresence>
-                  {showShareMenu && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 p-2 bg-black/90 backdrop-blur-lg rounded-lg shadow-xl z-50 border border-white/10"
-                    >
-                      <div className="flex gap-2">
-                        {/* Enhanced share buttons with consistent styling */}
-                        <button
-                          onClick={() => handleShare('facebook')}
-                          className="p-3 rounded-full bg-[#1877f2] hover:bg-[#1877f2]/80 transition-all duration-300 transform hover:scale-110 active:scale-95"
-                          aria-label="Compartir en Facebook"
-                        >
-                          <FaFacebookF className="w-4 h-4 text-white" />
-                        </button>
-                        <button
-                          onClick={() => handleShare('twitter')}
-                          className="p-3 rounded-full bg-[#1da1f2] hover:bg-[#1da1f2]/80 transition-all duration-300 transform hover:scale-110 active:scale-95"
-                          aria-label="Compartir en Twitter"
-                        >
-                          <FaTwitter className="w-4 h-4 text-white" />
-                        </button>
-                        <button
-                          onClick={() => handleShare('whatsapp')}
-                          className="p-3 rounded-full bg-[#25d366] hover:bg-[#25d366]/80 transition-all duration-300 transform hover:scale-110 active:scale-95"
-                          aria-label="Compartir en WhatsApp"
-                        >
-                          <FaWhatsapp className="w-4 h-4 text-white" />
-                        </button>
-                        <button
-                          onClick={() => handleShare('copy')}
-                          className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-all duration-300 transform hover:scale-110 active:scale-95"
-                          aria-label="Copiar enlace"
-                        >
-                          <BiCopy className="w-4 h-4 text-white" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            {/* Enhanced header with improved typography and spacing */}
-            <motion.header 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="py-16 text-center"
-            >
-              <motion.span 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block px-6 py-2 bg-primary text-white rounded-full mb-8 shadow-lg shadow-primary/25 transform hover:scale-105 transition-transform"
-              >
-                {news.categoria}
-              </motion.span>
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight tracking-tight"
-              >
-                {news.title}
-              </motion.h1>
-              <motion.time 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-gray-400 text-lg font-medium"
-              >
-                {new Date(news.fechaPublicacion).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </motion.time>
-            </motion.header>
-          </div>
-        </div>
-      </div>
-
-      {/* Enhanced main content section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 40 }}
+    <article className="min-h-screen pt-20 pb-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.6 }}
-        className="container mx-auto px-4 mt-12"
+        className="container mx-auto px-4"
       >
-        <div className="max-w-4xl mx-auto">
-          {news.imagen?.url && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6 }}
-              className="aspect-[21/9] rounded-2xl overflow-hidden mb-12 shadow-2xl transform hover:scale-[1.02] transition-transform duration-500"
+        {/* Main content section */}
+        <div className="max-w-4xl mx-auto mt-8">
+          <div className="flex justify-between items-center mb-8">
+            <Link
+              to="/noticias"
+              className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-all transform hover:-translate-x-2"
             >
+              <BiArrowBack className="w-5 h-5" />
+              <span>Volver a noticias</span>
+            </Link>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowShareMenu(!showShareMenu)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                aria-label="Compartir noticia"
+              >
+                <BiShareAlt className="w-5 h-5 text-white" />
+              </button>
+
+              <AnimatePresence>
+                {showShareMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="absolute right-0 mt-2 p-2 bg-white/10 backdrop-blur-lg rounded-lg shadow-xl z-50"
+                  >
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleShare('facebook')}
+                        className="p-2 rounded-full bg-[#1877f2] hover:bg-[#1877f2]/80 transition-colors"
+                        aria-label="Compartir en Facebook"
+                      >
+                        <FaFacebookF className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => handleShare('twitter')}
+                        className="p-2 rounded-full bg-[#1da1f2] hover:bg-[#1da1f2]/80 transition-colors"
+                        aria-label="Compartir en Twitter"
+                      >
+                        <FaTwitter className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => handleShare('whatsapp')}
+                        className="p-2 rounded-full bg-[#25d366] hover:bg-[#25d366]/80 transition-colors"
+                        aria-label="Compartir en WhatsApp"
+                      >
+                        <FaWhatsapp className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => handleShare('copy')}
+                        className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                        aria-label="Copiar enlace"
+                      >
+                        <BiCopy className="w-4 h-4 text-white" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <header className="mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+              {news.title}
+            </h1>
+            <p className="text-gray-400 text-lg">{news.description}</p>
+          </header>
+
+          {news.imagen?.url && (
+            <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-8">
               <img
                 src={news.imagen.url}
                 alt={news.title}
                 className="w-full h-full object-cover"
-                loading="eager"
               />
-            </motion.div>
+            </div>
           )}
 
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="prose prose-lg prose-invert max-w-none text-white/90 prose-headings:text-white prose-strong:text-white/90 prose-a:text-primary hover:prose-a:text-primary-hover prose-a:transition-colors prose-img:rounded-xl prose-img:shadow-xl"
-            dangerouslySetInnerHTML={{ __html: news.contenido }}
-          />
+          <div className="prose prose-lg prose-invert max-w-none [&>p]:text-white [&>p]:mb-6">
+            <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+              {news.contenido}
+            </ReactMarkdown>
+          </div>
 
-          {/* Enhanced navigation section */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="mt-16 pt-8 border-t border-white/10"
-          >
-            <div className="flex justify-between items-center">
-              <Link
-                to="/noticias"
-                className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-colors group"
-              >
-                <BiArrowBack className="w-5 h-5 transform transition-transform group-hover:-translate-x-1" />
-                <span className="font-medium">Volver a noticias</span>
-              </Link>
-              <button
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95"
-              >
-                Volver arriba
-              </button>
-            </div>
-          </motion.div>
+          {/* Related news section moved after content */}
+          {relatedNews.length > 0 && (
+            <section className="mt-16 border-t border-white/10 pt-16">
+              <h2 className="text-3xl font-bold text-white mb-8">Noticias relacionadas</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {relatedNews.map((item, index) => (
+                  <motion.article
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1"
+                  >
+                    <Link to={`/noticias/${item.slug}`} className="block">
+                      {item.imagen?.url && (
+                        <div className="aspect-video overflow-hidden">
+                          <img
+                            src={item.imagen.url}
+                            alt={item.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+                      )}
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-gray-400 line-clamp-2">
+                          {item.description}
+                        </p>
+                      </div>
+                    </Link>
+                  </motion.article>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
-      </motion.div>
 
-      {/* Enhanced related news section */}
-      {relatedNews.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
-        >
-          <RelatedNewsSection relatedNews={relatedNews} />
-        </motion.div>
-      )}
-
-      {/* Enhanced floating back-to-top button */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1 }}
-        className="fixed bottom-8 right-8 z-50"
-      >
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="p-4 bg-primary hover:bg-primary-hover text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 active:scale-95"
-          aria-label="Volver arriba"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </button>
+        {/* Loading indicator for next article */}
+        {isLoadingNext && (
+          <div ref={loadingRef} className="py-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-gray-400 mt-4">Cargando siguiente artículo...</p>
+          </div>
+        )}
       </motion.div>
     </article>
   );
 }
+
+export default NewsDetailPage;

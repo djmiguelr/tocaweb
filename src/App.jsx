@@ -9,6 +9,7 @@ import { NewsPage } from './pages/NewsPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
 import { EntrevistasPage } from './pages/EntrevistasPage';
 import { EntrevistaDetailPage } from './pages/EntrevistaDetailPage';
+import { LivePage } from './pages/LivePage';
 
 // Importar estilos
 import './styles/scrollbar-hide.css';
@@ -35,6 +36,7 @@ export function App() {
                 <Route path="/noticias/:slug" element={<NewsDetailPage />} />
                 <Route path="/entrevistas" element={<EntrevistasPage />} />
                 <Route path="/entrevistas/:slug" element={<EntrevistaDetailPage />} />
+                <Route path="/live" element={<LivePage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Layout>

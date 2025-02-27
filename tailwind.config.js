@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+      },
       colors: {
         primary: '#FF4D00', // Color naranja de Olímpica
         'primary-hover': '#FF6B2C',
@@ -26,4 +29,4 @@ export default {
     },
   },
   plugins: [],
-} 
+}
