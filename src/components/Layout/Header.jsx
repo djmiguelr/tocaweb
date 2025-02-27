@@ -38,7 +38,7 @@ export function Header() {
         <img 
           src={selectedCity.logo.url} 
           alt={selectedCity.name}
-          className="h-10 md:h-12 w-auto"
+          className="h-14 md:h-20 w-auto"
         />
       );
     }
@@ -48,13 +48,13 @@ export function Header() {
         <img
           src={headerInfo.logo.url}
           alt={headerInfo.title}
-          className="h-8 w-auto"
+          className="h-12 md:h-16 w-auto"
         />
       );
     }
 
     return (
-      <span className="text-xl font-bold">{headerInfo?.title || 'Toca Stereo'}</span>
+      <span className="text-2xl md:text-3xl font-bold">{headerInfo?.title || 'Toca Stereo'}</span>
     );
   };
 
