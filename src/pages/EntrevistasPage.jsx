@@ -10,6 +10,10 @@ export function EntrevistasPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
     const loadEntrevistas = async () => {
       try {
         setIsLoading(true);

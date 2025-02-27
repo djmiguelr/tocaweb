@@ -15,6 +15,9 @@ export function EntrevistaDetailPage() {
   const [relatedEntrevistas, setRelatedEntrevistas] = useState([]);
 
   useEffect(() => {
+    // Scroll to top when component mounts or slug changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     const loadEntrevista = async () => {
       if (!slug) {
         setError('URL no válida');

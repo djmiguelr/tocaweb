@@ -16,7 +16,8 @@ export function NewsSection() {
         const data = await apiService.getNews();
         console.log('Noticias cargadas en sección:', data);
         if (Array.isArray(data) && data.length > 0) {
-          setNews(data.slice(0, 6)); // Solo las 6 más recientes
+          const sortedNews = data.sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+          setNews(sortedNews.slice(0, 6)); // Solo las 6 más recientes
         } else {
           setError('No hay noticias disponibles');
         }

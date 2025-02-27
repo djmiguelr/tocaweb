@@ -15,6 +15,10 @@ export function TocaExitosPage() {
   const [loadingTrackId, setLoadingTrackId] = useState(null);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
     const fetchTocaExitos = async () => {
       if (!selectedCity?.documentId) {
         setIsLoading(false);

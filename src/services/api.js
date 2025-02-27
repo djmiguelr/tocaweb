@@ -489,6 +489,41 @@ const apiService = {
       console.error(`Error al obtener entrevista ${slug}:`, error);
       throw new Error('Error al cargar la entrevista');
     }
+  },
+
+  async getRelatedNews(currentSlug) {
+    try {
+      // First get the current news to get its category
+      const currentNews = await this.getNewsBySlug(currentSlug);
+      if (!currentNews) {
+        return [];
+      }
+
+      // Then get news from the same category, excluding the current one
+      const response = await api.get('/noticias', {
+        params: {
+          'filters[categoria][$eq]': currentNews.categoria,
+          'filters[slug][$ne]': currentSlug,
+          'populate[Imagendestacada][fields]': 'url',
+          'populate[fields][0]': 'title',
+          'populate[fields][1]': 'categoria',
+          'populate[fields][2]': 'contenido',
+          'populate[fields][3]': 'Fechapublicacion',
+          'populate[fields][4]': 'slug',
+          'sort[0]': 'Fechapublicacion:desc',
+          'pagination[pageSize]': 4
+        }
+      });
+
+      if (!response.data?.data) {
+        return [];
+      }
+
+      return processNewsData(response.data.data);
+    } catch (error) {
+      console.error('Error getting related news:', error);
+      return [];
+    }
   }
 };
 

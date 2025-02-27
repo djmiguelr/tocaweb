@@ -56,7 +56,12 @@ export function NewsPage() {
         }
 
         console.log('Noticias cargadas:', data);
-        setNews(data);
+        if (Array.isArray(data)) {
+          const sortedNews = data.sort((a, b) => new Date(b.fechaPublicacion) - new Date(a.fechaPublicacion));
+          setNews(sortedNews);
+        } else {
+          setNews([]);
+        }
       } catch (err) {
         console.error('Error cargando noticias:', err);
         setError('Error al cargar las noticias');
