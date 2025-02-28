@@ -213,7 +213,7 @@ export function EntrevistaDetailPage() {
               {relatedEntrevistas.length > 0 && (
                 <section className="mt-16">
                   <h2 className="text-2xl font-bold text-white mb-8">Entrevistas relacionadas</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {relatedEntrevistas.map((item, index) => (
                       <motion.div
                         key={item.slug}
@@ -225,19 +225,22 @@ export function EntrevistaDetailPage() {
                           to={`/entrevistas/${item.slug}`}
                           className="block group"
                         >
-                          <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
-                            <div className="w-full h-full relative">
+                          <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden mb-4 relative">
+                            <div className="w-full h-full">
                               <img
-                                src={item.thumbnail || `https://img.youtube.com/vi/${item.youtubeId}/maxresdefault.jpg`}
+                                src={item.portada?.url || '/placeholder-cover.jpg'}
                                 alt={item.title}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                loading="lazy"
                               />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 group-hover:opacity-90 transition-opacity" />
+                              <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                                <h3 className="text-white font-medium line-clamp-2 group-hover:text-primary transition-colors text-sm md:text-base">
+                                  {item.title}
+                                </h3>
+                              </div>
                             </div>
                           </div>
-                          <h3 className="text-white font-medium line-clamp-2 group-hover:text-primary transition-colors">
-                            {item.title}
-                          </h3>
                         </Link>
                       </motion.div>
                     ))}

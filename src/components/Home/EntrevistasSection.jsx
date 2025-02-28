@@ -13,7 +13,7 @@ export function EntrevistasSection() {
     const loadEntrevistas = async () => {
       try {
         const data = await apiService.getEntrevistas();
-        setEntrevistas(data.slice(0, 3)); // Mostrar solo 3 en el home
+        setEntrevistas(data.slice(0, 4)); // Mostrar 4 en el home
       } catch (error) {
         console.error('Error cargando entrevistas:', error);
         setError('Error al cargar las entrevistas');
@@ -27,8 +27,8 @@ export function EntrevistasSection() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {[...Array(3)].map((_, i) => (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
+        {[...Array(4)].map((_, i) => (
           <div key={i} className="animate-pulse bg-white/5 rounded-xl overflow-hidden">
             <div className="aspect-video bg-white/10" />
             <div className="p-6 space-y-3">
@@ -62,7 +62,7 @@ export function EntrevistasSection() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
         {entrevistas.map((item, index) => (
           <motion.article
             key={item.id}
@@ -103,4 +103,4 @@ export function EntrevistasSection() {
       </div>
     </div>
   );
-} 
+}

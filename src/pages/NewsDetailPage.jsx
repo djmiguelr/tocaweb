@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 import { RelatedNewsSection } from '../components/News/RelatedNewsSection';
 
 export function NewsDetailPage() {
@@ -444,7 +445,72 @@ export function NewsDetailPage() {
           )}
 
           <div className="prose prose-lg prose-invert max-w-none [&>p]:text-white [&>p]:mb-6">
-            <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+            <ReactMarkdown
+              rehypePlugins={[rehypeRaw]}
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ node, children }) => {
+                  if (node.children[0]?.tagName === 'iframe') {
+                    const iframeProps = node.children[0].properties;
+                    return (
+                      <div className="my-8 aspect-video">
+                        <iframe {...iframeProps} className="w-full h-full rounded-lg" />
+                      </div>
+                    );
+                  }
+
+                  const content = node.children[0]?.value;
+                  
+                  if (!content) {
+                    return <p>{children}</p>;
+                  }
+
+                  if (content.includes('twitter.com') || content.includes('x.com')) {
+                    return (
+                      <div className="my-8">
+                        <div 
+                          dangerouslySetInnerHTML={{ 
+                            __html: `<blockquote class="twitter-tweet" data-theme="dark"><a href="${content}"></a></blockquote><script async src="https://platform.twitter.com/widgets.js"></script>`
+                          }} 
+                        />
+                      </div>
+                    );
+                  }
+                    
+                  if (content.includes('instagram.com/p/')) {
+                    const postId = content.split('/p/')[1]?.split('/')[0];
+                    if (postId) {
+                      return (
+                        <div className="my-8">
+                          <blockquote
+                            className="instagram-media"
+                            data-instgrm-permalink={content}
+                            data-instgrm-version="14"
+                          >
+                            <a href={content}></a>
+                          </blockquote>
+                          <script async src="//www.instagram.com/embed.js"></script>
+                        </div>
+                      );
+                    }
+                  }
+                    
+                  if (content.includes('facebook.com')) {
+                    return (
+                      <div className="my-8">
+                        <div 
+                          dangerouslySetInnerHTML={{
+                            __html: `<div class="fb-post" data-href="${content}"></div><script async defer src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.2"></script>`
+                          }}
+                        />
+                      </div>
+                    );
+                  }
+                  
+                  return <p>{children}</p>;
+                }
+              }}
+            >
               {news.contenido}
             </ReactMarkdown>
           </div>
