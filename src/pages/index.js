@@ -3,4 +3,5 @@ export { NewsPage } from './NewsPage';
 export { NewsDetailPage } from './NewsDetailPage';
 export { EntrevistasPage } from './EntrevistasPage';
 export { EntrevistaDetailPage } from './EntrevistaDetailPage';
-// ... otras exportaciones ... 
+export { ProgramacionPage } from './ProgramacionPage';
+// ... otras exportaciones ...

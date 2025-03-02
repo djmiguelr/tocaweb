@@ -41,6 +41,10 @@ export function NewsPage() {
   const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Todos');
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [selectedCategory]);
+
   const categories = ['Todos', 'Entretenimiento', 'Nacional', 'Deportes', 'Mundo'];
 
   useEffect(() => {

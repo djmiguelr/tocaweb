@@ -180,7 +180,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-[#1C1C1C] text-white py-12">
+    <footer className="bg-[#1C1C1C] text-white py-12 mb-24">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           {/* Logo - ocupa 4 columnas en desktop */}

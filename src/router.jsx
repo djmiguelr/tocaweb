@@ -5,6 +5,7 @@ import { NewsPage } from './pages/NewsPage';
 import { NewsDetailPage } from './pages/NewsDetailPage';
 import { EntrevistasPage } from './pages/EntrevistasPage';
 import { EntrevistaDetailPage } from './pages/EntrevistaDetailPage';
+import { ProgramacionPage } from './pages/ProgramacionPage';
 import { RootLayout } from './layouts/RootLayout';
 import { ErrorPage } from './pages/ErrorPage';
 
@@ -46,6 +47,10 @@ export const router = createBrowserRouter(
         {
           path: 'entrevistas/:slug',
           element: <EntrevistaDetailPage />
+        },
+        {
+          path: '/programacion',
+          element: <ProgramacionPage />
         }
       ]
     }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BiArrowBack, BiShareAlt, BiCopy } from 'react-icons/bi';
@@ -13,6 +13,16 @@ export function EntrevistaDetailPage() {
   const [error, setError] = useState(null);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [relatedEntrevistas, setRelatedEntrevistas] = useState([]);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+
+  // Memoize filtered related interviews
+  const filteredRelatedEntrevistas = useMemo(() => {
+    return relatedEntrevistas.filter(item => item.slug !== slug);
+  }, [relatedEntrevistas, slug]);
+
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 4; // Show 4 items per page
+  const totalPages = Math.ceil(filteredRelatedEntrevistas.length / itemsPerPage);
 
   useEffect(() => {
     // Scroll to top when component mounts or slug changes
@@ -39,8 +49,7 @@ export function EntrevistaDetailPage() {
 
         // Load related interviews
         const relatedData = await apiService.getEntrevistas();
-        const filtered = relatedData.filter(item => item.slug !== slug).slice(0, 4);
-        setRelatedEntrevistas(filtered);
+        setRelatedEntrevistas(relatedData);
       } catch (err) {
         console.error('Error cargando entrevista:', err);
         setError(err.message || 'Error al cargar la entrevista');
@@ -80,16 +89,27 @@ export function EntrevistaDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pt-20 pb-12">
+      <div className="min-h-screen pt-20 pb-12 bg-gradient-to-b from-black via-black/95 to-black/90">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto animate-pulse">
-            <div className="h-8 bg-white/10 rounded mb-4 w-1/3" />
-            <div className="aspect-video bg-white/10 rounded mb-8" />
-            <div className="space-y-4">
-              <div className="h-4 bg-white/10 rounded w-3/4" />
-              <div className="h-4 bg-white/10 rounded w-full" />
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="flex items-center gap-4 mb-8 animate-pulse">
+              <div className="w-10 h-10 bg-white/10 rounded-full" />
+              <div className="h-4 bg-white/10 rounded w-32" />
             </div>
-          </div>
+            <div className="space-y-8">
+              <div className="h-12 bg-white/10 rounded-lg w-3/4" />
+              <div className="aspect-video bg-white/10 rounded-2xl shadow-2xl" />
+              <div className="space-y-4 max-w-2xl">
+                <div className="h-4 bg-white/10 rounded w-full" />
+                <div className="h-4 bg-white/10 rounded w-5/6" />
+                <div className="h-4 bg-white/10 rounded w-4/5" />
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
@@ -188,63 +208,150 @@ export function EntrevistaDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-4xl mx-auto"
             >
-              <header className="text-center mb-8">
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              <header className="text-center mb-12">
+                <motion.h1 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-white via-white to-primary bg-clip-text text-transparent mb-6"
+                >
                   {entrevista.title}
-                </h1>
+                </motion.h1>
+                {entrevista.date && (
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-gray-400"
+                  >
+                    {new Date(entrevista.date).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </motion.p>
+                )}
               </header>
 
-              <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-8">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="relative aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-12 group"
+              >
                 <iframe
                   src={`https://www.youtube.com/embed/${entrevista.youtubeId}`}
                   title={entrevista.title}
                   className="w-full h-full"
                   allowFullScreen
+                  onPlay={() => setIsVideoPlaying(true)}
+                  onPause={() => setIsVideoPlaying(false)}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 />
-              </div>
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${isVideoPlaying ? 'opacity-0' : 'opacity-100'}`} />
+              </motion.div>
 
-              <div className="prose prose-lg prose-invert max-w-none mb-16">
-                <p className="text-gray-300 leading-relaxed">
-                  {entrevista.description}
-                </p>
-              </div>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mb-16"
+              >
+                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 md:p-8 shadow-lg">
+                  <div className="max-w-3xl mx-auto">
+                    <div className="space-y-4">
+                      {entrevista.description.split('\n\n').map((paragraph, idx) => (
+                        <p 
+                          key={idx}
+                          className="text-gray-300 leading-relaxed text-lg"
+                        >
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                    {entrevista.tags && entrevista.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-6">
+                        {entrevista.tags.map((tag, index) => (
+                          <span 
+                            key={index}
+                            className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
 
               {relatedEntrevistas.length > 0 && (
                 <section className="mt-16">
                   <h2 className="text-2xl font-bold text-white mb-8">Entrevistas relacionadas</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {relatedEntrevistas.map((item, index) => (
-                      <motion.div
-                        key={item.slug}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <Link
-                          to={`/entrevistas/${item.slug}`}
-                          className="block group"
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                    {filteredRelatedEntrevistas
+                      .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+                      .map((item, index) => (
+                        <motion.div
+                          key={item.slug}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
                         >
-                          <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden mb-4 relative">
-                            <div className="w-full h-full">
-                              <img
-                                src={item.portada?.url || '/placeholder-cover.jpg'}
-                                alt={item.title}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                loading="lazy"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 group-hover:opacity-90 transition-opacity" />
-                              <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                                <h3 className="text-white font-medium line-clamp-2 group-hover:text-primary transition-colors text-sm md:text-base">
-                                  {item.title}
-                                </h3>
+                          <Link
+                            to={`/entrevistas/${item.slug}`}
+                            className="block group"
+                          >
+                            <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden mb-4 relative">
+                              <div className="w-full h-full">
+                                <img
+                                  src={item.portada?.url || '/placeholder-cover.jpg'}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 group-hover:opacity-90 transition-opacity" />
+                                <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                                  <h3 className="text-white font-medium line-clamp-2 group-hover:text-primary transition-colors text-sm md:text-base">
+                                    {item.title}
+                                  </h3>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </Link>
-                      </motion.div>
+                          </Link>
+                        </motion.div>
                     ))}
                   </div>
+                  
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center items-center gap-4">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                        disabled={currentPage === 0}
+                        className={`px-4 py-2 rounded-lg transition-colors ${currentPage === 0 ? 'bg-white/5 text-white/30 cursor-not-allowed' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                      >
+                        Anterior
+                      </button>
+                      <div className="flex items-center gap-2">
+                        {[...Array(totalPages)].map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setCurrentPage(index)}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${currentPage === index ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                          >
+                            {index + 1}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                        disabled={currentPage === totalPages - 1}
+                        className={`px-4 py-2 rounded-lg transition-colors ${currentPage === totalPages - 1 ? 'bg-white/5 text-white/30 cursor-not-allowed' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  )}
                 </section>
               )}
             </motion.article>

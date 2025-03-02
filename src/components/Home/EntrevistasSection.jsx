@@ -62,44 +62,46 @@ export function EntrevistasSection() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-        {entrevistas.map((item, index) => (
-          <motion.article
-            key={item.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group relative bg-white/5 rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1"
-          >
-            <Link to={`/entrevistas/${item.slug}`} className="block">
-              <div className="relative aspect-[9/16] overflow-hidden">
-                {item.portada?.url ? (
-                  <img
-                    src={item.portada.url}
-                    alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    <BiPlay className="w-12 h-12 text-primary/50" />
+      <div className="relative overflow-x-auto pb-4 -mx-4 px-4 md:mx-0 md:px-0 md:overflow-x-visible">
+        <div className="flex gap-4 snap-x snap-mandatory overflow-x-auto scrollbar-hide md:grid md:grid-cols-3 lg:grid-cols-4 md:gap-6 lg:gap-8">
+          {entrevistas.map((item, index) => (
+            <motion.article
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="flex-none w-[calc(50%-8px)] md:w-full group relative bg-white/5 rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1 snap-start"
+            >
+              <Link to={`/entrevistas/${item.slug}`} className="block">
+                <div className="relative aspect-[9/16] overflow-hidden">
+                  {item.portada?.url ? (
+                    <img
+                      src={item.portada.url}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <BiPlay className="w-12 h-12 text-primary/50" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-100">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                      <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-2">
+                        {item.title}
+                      </h3>
+                    </div>
                   </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-100">
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                    <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-2">
-                      {item.title}
-                    </h3>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center transform scale-0 group-hover:scale-100 transition-transform">
+                      <BiPlay className="w-8 h-8 text-white" />
+                    </div>
                   </div>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 bg-primary/90 rounded-full flex items-center justify-center transform scale-0 group-hover:scale-100 transition-transform">
-                    <BiPlay className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          </motion.article>
-        ))}
+              </Link>
+            </motion.article>
+          ))}
+        </div>
       </div>
     </div>
   );

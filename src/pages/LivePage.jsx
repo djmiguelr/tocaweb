@@ -26,7 +26,8 @@ export function LivePage() {
         
         // Extract all available data from the response
         const cityAttributes = cityData?.attributes || {};
-        const liveAttributes = cityAttributes?.Live?.data?.[0]?.attributes || {};
+        const liveData = cityAttributes?.Live?.data || [];
+        const liveAttributes = liveData[0]?.attributes || {};
         
         // Set live data with enhanced information
         setLiveData({
@@ -39,9 +40,11 @@ export function LivePage() {
           schedule: liveAttributes.schedule || null
         });
 
-        // Show informative message if live stream is not available
-        if (!liveAttributes.url) {
+        // Only show error if there's no URL and no schedule information
+        if (!liveAttributes.url && !liveAttributes.schedule) {
           setError('En este momento no hay transmisión en vivo. Vuelve más tarde para disfrutar del contenido en directo.');
+        } else {
+          setError(null);
         }
       } catch (err) {
         console.error('Error fetching live data:', err);
