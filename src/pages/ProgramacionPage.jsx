@@ -40,14 +40,44 @@ export function ProgramacionPage() {
 
   const getCurrentProgram = () => {
     const now = new Date();
-    const currentTime = format(now, 'HH:mm');
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
     const currentDay = format(now, 'EEEE', { locale: es }).toLowerCase();
-  
+    const currentMinutes = currentHour * 60 + currentMinute;
+
     return programs.find(program => {
-      if (!program.days.includes(currentDay)) return false;
+      if (!program.days || !Array.isArray(program.days)) return false;
+      if (!program.days.some(day => day.toLowerCase().trim() === currentDay)) return false;
+
       const start = program.startTime;
       const end = program.endTime;
-      return currentTime >= start && currentTime <= end;
+      if (!start || !end) return false;
+
+      // Parse start time
+      let [startHour, startMinute] = start.split(':').map(Number);
+      if (start.toLowerCase().includes('pm') && startHour !== 12) {
+        startHour += 12;
+      } else if (start.toLowerCase().includes('am') && startHour === 12) {
+        startHour = 0;
+      }
+
+      // Parse end time
+      let [endHour, endMinute] = end.split(':').map(Number);
+      if (end.toLowerCase().includes('pm') && endHour !== 12) {
+        endHour += 12;
+      } else if (end.toLowerCase().includes('am') && endHour === 12) {
+        endHour = 0;
+      }
+
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+
+      // Handle programs that cross midnight
+      if (startMinutes > endMinutes) {
+        return currentMinutes >= startMinutes || currentMinutes <= endMinutes;
+      }
+
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
     });
   };
 
