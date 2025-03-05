@@ -6,6 +6,7 @@ import { MainSlider } from '../components/Home/MainSlider';
 import { NewsSection } from '../components/Home/NewsSection';
 import { memo } from 'react';
 import { EntrevistasSection } from '../components/Home/EntrevistasSection';
+import { LocutoresSection } from '../components/Home/LocutoresSection';
 
 const HomePageComponent = memo(function HomePageComponent() {
   const { selectedCity, isLoading, error } = useCity();
@@ -72,16 +73,8 @@ const HomePageComponent = memo(function HomePageComponent() {
           <section className="bg-[#1C1C1C] rounded-xl p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">Nuestros Locutores</h2>
-              <Link 
-                to="/locutores"
-                className="text-sm text-primary hover:text-primary-hover transition-colors"
-              >
-                Conoce al equipo
-              </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {/* Aquí irían las cards de locutores */}
-            </div>
+            <LocutoresSection />
           </section>
         </div>
       )}

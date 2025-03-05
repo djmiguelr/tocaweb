@@ -100,7 +100,16 @@ const processCityData = (cityData) => {
       plataforma: red.plataforma,
       URL: red.URL
     })) : [],
-    TocaExitos: processTocaExitos(cityData.TocaExitos)
+    TocaExitos: processTocaExitos(cityData.TocaExitos),
+    Locutor: Array.isArray(cityData.Locutor) ? cityData.Locutor.map(locutor => ({
+      id: locutor.id,
+      name: locutor.name,
+      biodj: locutor.biodj,
+      coverdj: locutor.coverdj ? {
+        url: getMediaUrl(locutor.coverdj),
+        documentId: locutor.coverdj.documentId
+      } : null
+    })) : []
   };
 };
 
@@ -230,7 +239,10 @@ const apiService = {
           'populate[apps][fields][0]': 'android',
           'populate[apps][fields][1]': 'ios',
           'populate[Redes][fields][0]': 'plataforma',
-          'populate[Redes][fields][1]': 'URL'
+          'populate[Redes][fields][1]': 'URL',
+          'populate[Locutor][fields][0]': 'name',
+          'populate[Locutor][fields][1]': 'biodj',
+          'populate[Locutor][populate][coverdj][fields]': 'url'
         }
       });
 
