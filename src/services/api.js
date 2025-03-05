@@ -105,6 +105,7 @@ const processCityData = (cityData) => {
       id: locutor.id,
       name: locutor.name,
       biodj: locutor.biodj,
+      cargo: locutor.cargo,
       coverdj: locutor.coverdj ? {
         url: getMediaUrl(locutor.coverdj),
         documentId: locutor.coverdj.documentId
@@ -242,6 +243,7 @@ const apiService = {
           'populate[Redes][fields][1]': 'URL',
           'populate[Locutor][fields][0]': 'name',
           'populate[Locutor][fields][1]': 'biodj',
+          'populate[Locutor][fields][2]': 'cargo',
           'populate[Locutor][populate][coverdj][fields]': 'url'
         }
       });

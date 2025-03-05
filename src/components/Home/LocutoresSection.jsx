@@ -61,7 +61,12 @@ export function LocutoresSection() {
                 </div>
               )}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 md:p-6">
-                <p className="text-white text-center font-bold text-base md:text-2xl lg:text-3xl min-h-[2.5em] flex items-center justify-center">{locutor.name}</p>
+                <div className="flex flex-col items-center justify-center min-h-[2.5em]">
+                  <p className="text-white text-center font-bold text-base md:text-xl lg:text-2xl mb-1">{locutor.name}</p>
+                  {locutor.cargo && (
+                    <p className="text-white/90 text-center text-sm md:text-base font-medium">{locutor.cargo}</p>
+                  )}
+                </div>
               </div>
             </div>
           </motion.button>

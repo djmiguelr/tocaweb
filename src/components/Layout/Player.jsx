@@ -481,5 +481,3 @@ export function Player() {
     </>
   );
 }
-
-export default Player;
