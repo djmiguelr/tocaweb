@@ -5,6 +5,7 @@ import { BiArrowBack, BiShareAlt, BiCopy } from 'react-icons/bi';
 import { FaFacebookF, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 import { apiService } from '../services/api';
 import { toast } from 'sonner';
+import { SEO } from '../components/SEO';
 
 export function EntrevistaDetailPage() {
   const { slug } = useParams();
@@ -137,227 +138,238 @@ export function EntrevistaDetailPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <Link
-              to="/entrevistas"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-all transform hover:-translate-x-2"
-            >
-              <BiArrowBack className="w-5 h-5" />
-              <span>Volver a entrevistas</span>
-            </Link>
-
-            <div className="relative">
-              <button
-                onClick={() => setShowShareMenu(!showShareMenu)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                aria-label="Compartir entrevista"
+    <>
+      {entrevista && (
+        <SEO 
+          title={entrevista.title}
+          description={entrevista.description || `Entrevista exclusiva con ${entrevista.title} en Toca Stereo. Conoce más sobre su música y trayectoria.`}
+          type="article"
+          image={entrevista.portada?.url}
+        />
+      )}
+      
+      <div className="min-h-screen pt-20 pb-12">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <Link
+                to="/entrevistas"
+                className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-all transform hover:-translate-x-2"
               >
-                <BiShareAlt className="w-5 h-5 text-white" />
-              </button>
+                <BiArrowBack className="w-5 h-5" />
+                <span>Volver a entrevistas</span>
+              </Link>
 
-              <AnimatePresence>
-                {showShareMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute right-0 mt-2 p-2 bg-white/10 backdrop-blur-lg rounded-lg shadow-xl z-50"
-                  >
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleShare('facebook')}
-                        className="p-2 rounded-full bg-[#1877f2] hover:bg-[#1877f2]/80 transition-colors"
-                        aria-label="Compartir en Facebook"
-                      >
-                        <FaFacebookF className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleShare('twitter')}
-                        className="p-2 rounded-full bg-[#1da1f2] hover:bg-[#1da1f2]/80 transition-colors"
-                        aria-label="Compartir en Twitter"
-                      >
-                        <FaTwitter className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleShare('whatsapp')}
-                        className="p-2 rounded-full bg-[#25d366] hover:bg-[#25d366]/80 transition-colors"
-                        aria-label="Compartir en WhatsApp"
-                      >
-                        <FaWhatsapp className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleShare('copy')}
-                        className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                        aria-label="Copiar enlace"
-                      >
-                        <BiCopy className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="relative">
+                <button
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Compartir entrevista"
+                >
+                  <BiShareAlt className="w-5 h-5 text-white" />
+                </button>
+
+                <AnimatePresence>
+                  {showShareMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="absolute right-0 mt-2 p-2 bg-white/10 backdrop-blur-lg rounded-lg shadow-xl z-50"
+                    >
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleShare('facebook')}
+                          className="p-2 rounded-full bg-[#1877f2] hover:bg-[#1877f2]/80 transition-colors"
+                          aria-label="Compartir en Facebook"
+                        >
+                          <FaFacebookF className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleShare('twitter')}
+                          className="p-2 rounded-full bg-[#1da1f2] hover:bg-[#1da1f2]/80 transition-colors"
+                          aria-label="Compartir en Twitter"
+                        >
+                          <FaTwitter className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleShare('whatsapp')}
+                          className="p-2 rounded-full bg-[#25d366] hover:bg-[#25d366]/80 transition-colors"
+                          aria-label="Compartir en WhatsApp"
+                        >
+                          <FaWhatsapp className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleShare('copy')}
+                          className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                          aria-label="Copiar enlace"
+                        >
+                          <BiCopy className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-          </div>
 
-          {entrevista && (
-            <motion.article
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-4xl mx-auto"
-            >
-              <header className="text-center mb-12">
-                <motion.h1 
+            {entrevista && (
+              <motion.article
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="max-w-4xl mx-auto"
+              >
+                <header className="text-center mb-12">
+                  <motion.h1 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-white via-white to-primary bg-clip-text text-transparent mb-6"
+                  >
+                    {entrevista.title}
+                  </motion.h1>
+                  {entrevista.date && (
+                    <motion.p 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                      className="text-gray-400"
+                    >
+                      {new Date(entrevista.date).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </motion.p>
+                  )}
+                </header>
+
+                <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-white via-white to-primary bg-clip-text text-transparent mb-6"
+                  transition={{ delay: 0.1 }}
+                  className="relative aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-12 group"
                 >
-                  {entrevista.title}
-                </motion.h1>
-                {entrevista.date && (
-                  <motion.p 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.2 }}
-                    className="text-gray-400"
-                  >
-                    {new Date(entrevista.date).toLocaleDateString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </motion.p>
-                )}
-              </header>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${entrevista.youtubeId}`}
+                    title={entrevista.title}
+                    className="w-full h-full"
+                    allowFullScreen
+                    onPlay={() => setIsVideoPlaying(true)}
+                    onPause={() => setIsVideoPlaying(false)}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${isVideoPlaying ? 'opacity-0' : 'opacity-100'}`} />
+                </motion.div>
 
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="relative aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-12 group"
-              >
-                <iframe
-                  src={`https://www.youtube.com/embed/${entrevista.youtubeId}`}
-                  title={entrevista.title}
-                  className="w-full h-full"
-                  allowFullScreen
-                  onPlay={() => setIsVideoPlaying(true)}
-                  onPause={() => setIsVideoPlaying(false)}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                />
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${isVideoPlaying ? 'opacity-0' : 'opacity-100'}`} />
-              </motion.div>
-
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="mb-16"
-              >
-                <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 md:p-8 shadow-lg">
-                  <div className="max-w-3xl mx-auto">
-                    <div className="space-y-4">
-                      {entrevista.description.split('\n\n').map((paragraph, idx) => (
-                        <p 
-                          key={idx}
-                          className="text-gray-300 leading-relaxed text-lg"
-                        >
-                          {paragraph}
-                        </p>
-                      ))}
-                    </div>
-                    {entrevista.tags && entrevista.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-6">
-                        {entrevista.tags.map((tag, index) => (
-                          <span 
-                            key={index}
-                            className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="mb-16"
+                >
+                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 md:p-8 shadow-lg">
+                    <div className="max-w-3xl mx-auto">
+                      <div className="space-y-4">
+                        {entrevista.description.split('\n\n').map((paragraph, idx) => (
+                          <p 
+                            key={idx}
+                            className="text-gray-300 leading-relaxed text-lg"
                           >
-                            {tag}
-                          </span>
+                            {paragraph}
+                          </p>
                         ))}
                       </div>
-                    )}
+                      {entrevista.tags && entrevista.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-6">
+                          {entrevista.tags.map((tag, index) => (
+                            <span 
+                              key={index}
+                              className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
 
-              {relatedEntrevistas.length > 0 && (
-                <section className="mt-16">
-                  <h2 className="text-2xl font-bold text-white mb-8">Entrevistas relacionadas</h2>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                    {filteredRelatedEntrevistas
-                      .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
-                      .map((item, index) => (
-                        <motion.div
-                          key={item.slug}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          <Link
-                            to={`/entrevistas/${item.slug}`}
-                            className="block group"
+                {relatedEntrevistas.length > 0 && (
+                  <section className="mt-16">
+                    <h2 className="text-2xl font-bold text-white mb-8">Entrevistas relacionadas</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                      {filteredRelatedEntrevistas
+                        .slice(currentPage * itemsPerPage, (currentPage + 1) * itemsPerPage)
+                        .map((item, index) => (
+                          <motion.div
+                            key={item.slug}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
                           >
-                            <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden mb-4 relative">
-                              <div className="w-full h-full">
-                                <img
-                                  src={item.portada?.url || '/placeholder-cover.jpg'}
-                                  alt={item.title}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                  loading="lazy"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 group-hover:opacity-90 transition-opacity" />
-                                <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                                  <h3 className="text-white font-medium line-clamp-2 group-hover:text-primary transition-colors text-sm md:text-base">
-                                    {item.title}
-                                  </h3>
+                            <Link
+                              to={`/entrevistas/${item.slug}`}
+                              className="block group"
+                            >
+                              <div className="aspect-[9/16] bg-black rounded-lg overflow-hidden mb-4 relative">
+                                <div className="w-full h-full">
+                                  <img
+                                    src={item.portada?.url || '/placeholder-cover.jpg'}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                    loading="lazy"
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-100 group-hover:opacity-90 transition-opacity" />
+                                  <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                                    <h3 className="text-white font-medium line-clamp-2 group-hover:text-primary transition-colors text-sm md:text-base">
+                                      {item.title}
+                                    </h3>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </Link>
-                        </motion.div>
-                    ))}
-                  </div>
-                  
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="flex justify-center items-center gap-4">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                        disabled={currentPage === 0}
-                        className={`px-4 py-2 rounded-lg transition-colors ${currentPage === 0 ? 'bg-white/5 text-white/30 cursor-not-allowed' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                      >
-                        Anterior
-                      </button>
-                      <div className="flex items-center gap-2">
-                        {[...Array(totalPages)].map((_, index) => (
-                          <button
-                            key={index}
-                            onClick={() => setCurrentPage(index)}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${currentPage === index ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                          >
-                            {index + 1}
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                        disabled={currentPage === totalPages - 1}
-                        className={`px-4 py-2 rounded-lg transition-colors ${currentPage === totalPages - 1 ? 'bg-white/5 text-white/30 cursor-not-allowed' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                      >
-                        Siguiente
-                      </button>
+                            </Link>
+                          </motion.div>
+                      ))}
                     </div>
-                  )}
-                </section>
-              )}
-            </motion.article>
-          )}
+                    
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex justify-center items-center gap-4">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                          disabled={currentPage === 0}
+                          className={`px-4 py-2 rounded-lg transition-colors ${currentPage === 0 ? 'bg-white/5 text-white/30 cursor-not-allowed' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                          Anterior
+                        </button>
+                        <div className="flex items-center gap-2">
+                          {[...Array(totalPages)].map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentPage(index)}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${currentPage === index ? 'bg-primary text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                            >
+                              {index + 1}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                          disabled={currentPage === totalPages - 1}
+                          className={`px-4 py-2 rounded-lg transition-colors ${currentPage === totalPages - 1 ? 'bg-white/5 text-white/30 cursor-not-allowed' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                        >
+                          Siguiente
+                        </button>
+                      </div>
+                    )}
+                  </section>
+                )}
+              </motion.article>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

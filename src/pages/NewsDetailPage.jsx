@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { RelatedNewsSection } from '../components/News/RelatedNewsSection';
+import { SEO } from '../components/SEO';
 
 export function NewsDetailPage() {
   const { slug } = useParams();
@@ -280,7 +281,7 @@ export function NewsDetailPage() {
     return (
       <div className="min-h-screen pt-20 pb-12">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
             <Link
               to="/noticias"
               className="inline-flex items-center gap-2 text-primary hover:text-primary-hover mb-8 transition-all transform hover:-translate-x-2"
@@ -289,25 +290,23 @@ export function NewsDetailPage() {
               <span>Volver a noticias</span>
             </Link>
 
-            <div className="max-w-4xl mx-auto">
-              <div className="flex justify-end mb-4">
-                <div className="relative">
-                  <button
-                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                    aria-label="Compartir noticia"
-                    disabled
-                  >
-                    <BiShareAlt className="w-5 h-5 text-white/50" />
-                  </button>
-                </div>
+            <div className="flex justify-end mb-4">
+              <div className="relative">
+                <button
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Compartir noticia"
+                  disabled
+                >
+                  <BiShareAlt className="w-5 h-5 text-white/50" />
+                </button>
               </div>
-              <header className="py-12 text-center animate-pulse">
-                <div className="h-8 bg-white/10 w-32 mx-auto rounded-full mb-6" />
-                <div className="h-12 bg-white/10 w-3/4 mx-auto rounded-lg mb-4" />
-                <div className="h-12 bg-white/10 w-2/3 mx-auto rounded-lg mb-6" />
-                <div className="h-6 bg-white/10 w-48 mx-auto rounded-lg" />
-              </header>
             </div>
+            <header className="py-12 text-center animate-pulse">
+              <div className="h-8 bg-white/10 w-32 mx-auto rounded-full mb-6" />
+              <div className="h-12 bg-white/10 w-3/4 mx-auto rounded-lg mb-4" />
+              <div className="h-12 bg-white/10 w-2/3 mx-auto rounded-lg mb-6" />
+              <div className="h-6 bg-white/10 w-48 mx-auto rounded-lg" />
+            </header>
           </div>
         </div>
       </div>
@@ -357,212 +356,223 @@ export function NewsDetailPage() {
   }
 
   return (
-    <article className="min-h-screen pt-20 pb-12">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="container mx-auto px-4"
-      >
-        {/* Main content section */}
-        <div className="max-w-4xl mx-auto mt-8">
-          <div className="flex justify-between items-center mb-8">
-            <Link
-              to="/noticias"
-              className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-all transform hover:-translate-x-2"
-            >
-              <BiArrowBack className="w-5 h-5" />
-              <span>Volver a noticias</span>
-            </Link>
-
-            <div className="relative">
-              <button
-                onClick={() => setShowShareMenu(!showShareMenu)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                aria-label="Compartir noticia"
+    <>
+      {news && (
+        <SEO 
+          title={news.title}
+          description={news.description || news.contenido?.replace(/<[^>]*>/g, '').substring(0, 160)}
+          type="article"
+          image={news.imagen?.url}
+        />
+      )}
+      
+      <article className="min-h-screen pt-20 pb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="container mx-auto px-4"
+        >
+          {/* Main content section */}
+          <div className="max-w-4xl mx-auto mt-8">
+            <div className="flex justify-between items-center mb-8">
+              <Link
+                to="/noticias"
+                className="inline-flex items-center gap-2 text-primary hover:text-primary-hover transition-all transform hover:-translate-x-2"
               >
-                <BiShareAlt className="w-5 h-5 text-white" />
-              </button>
+                <BiArrowBack className="w-5 h-5" />
+                <span>Volver a noticias</span>
+              </Link>
 
-              <AnimatePresence>
-                {showShareMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute right-0 mt-2 p-2 bg-white/10 backdrop-blur-lg rounded-lg shadow-xl z-50"
-                  >
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleShare('facebook')}
-                        className="p-2 rounded-full bg-[#1877f2] hover:bg-[#1877f2]/80 transition-colors"
-                        aria-label="Compartir en Facebook"
-                      >
-                        <FaFacebookF className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleShare('twitter')}
-                        className="p-2 rounded-full bg-[#1da1f2] hover:bg-[#1da1f2]/80 transition-colors"
-                        aria-label="Compartir en Twitter"
-                      >
-                        <FaTwitter className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleShare('whatsapp')}
-                        className="p-2 rounded-full bg-[#25d366] hover:bg-[#25d366]/80 transition-colors"
-                        aria-label="Compartir en WhatsApp"
-                      >
-                        <FaWhatsapp className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => handleShare('copy')}
-                        className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                        aria-label="Copiar enlace"
-                      >
-                        <BiCopy className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
+              <div className="relative">
+                <button
+                  onClick={() => setShowShareMenu(!showShareMenu)}
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                  aria-label="Compartir noticia"
+                >
+                  <BiShareAlt className="w-5 h-5 text-white" />
+                </button>
 
-          <header className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              {news.title}
-            </h1>
-            <p className="text-gray-400 text-lg">{news.description}</p>
-          </header>
-
-          {news.imagen?.url && (
-            <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-8">
-              <img
-                src={news.imagen.url}
-                alt={news.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-
-          <div className="prose prose-lg prose-invert max-w-none [&>p]:text-white [&>p]:mb-6">
-            <ReactMarkdown
-              rehypePlugins={[rehypeRaw]}
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({ node, children }) => {
-                  if (node.children[0]?.tagName === 'iframe') {
-                    const iframeProps = node.children[0].properties;
-                    return (
-                      <div className="my-8 aspect-video">
-                        <iframe {...iframeProps} className="w-full h-full rounded-lg" />
+                <AnimatePresence>
+                  {showShareMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="absolute right-0 mt-2 p-2 bg-white/10 backdrop-blur-lg rounded-lg shadow-xl z-50"
+                    >
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleShare('facebook')}
+                          className="p-2 rounded-full bg-[#1877f2] hover:bg-[#1877f2]/80 transition-colors"
+                          aria-label="Compartir en Facebook"
+                        >
+                          <FaFacebookF className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleShare('twitter')}
+                          className="p-2 rounded-full bg-[#1da1f2] hover:bg-[#1da1f2]/80 transition-colors"
+                          aria-label="Compartir en Twitter"
+                        >
+                          <FaTwitter className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleShare('whatsapp')}
+                          className="p-2 rounded-full bg-[#25d366] hover:bg-[#25d366]/80 transition-colors"
+                          aria-label="Compartir en WhatsApp"
+                        >
+                          <FaWhatsapp className="w-4 h-4 text-white" />
+                        </button>
+                        <button
+                          onClick={() => handleShare('copy')}
+                          className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                          aria-label="Copiar enlace"
+                        >
+                          <BiCopy className="w-4 h-4 text-white" />
+                        </button>
                       </div>
-                    );
-                  }
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
 
-                  const content = node.children[0]?.value;
-                  
-                  if (!content) {
-                    return <p>{children}</p>;
-                  }
+            <header className="mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                {news.title}
+              </h1>
+              <p className="text-gray-400 text-lg">{news.description}</p>
+            </header>
 
-                  if (content.includes('twitter.com') || content.includes('x.com')) {
-                    return (
-                      <div className="my-8">
-                        <div 
-                          dangerouslySetInnerHTML={{ 
-                            __html: `<blockquote class="twitter-tweet" data-theme="dark"><a href="${content}"></a></blockquote><script async src="https://platform.twitter.com/widgets.js"></script>`
-                          }} 
-                        />
-                      </div>
-                    );
-                  }
-                    
-                  if (content.includes('instagram.com/p/')) {
-                    const postId = content.split('/p/')[1]?.split('/')[0];
-                    if (postId) {
+            {news.imagen?.url && (
+              <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-8">
+                <img
+                  src={news.imagen.url}
+                  alt={news.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            <div className="prose prose-lg prose-invert max-w-none [&>p]:text-white [&>p]:mb-6">
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ node, children }) => {
+                    if (node.children[0]?.tagName === 'iframe') {
+                      const iframeProps = node.children[0].properties;
                       return (
-                        <div className="my-8">
-                          <blockquote
-                            className="instagram-media"
-                            data-instgrm-permalink={content}
-                            data-instgrm-version="14"
-                          >
-                            <a href={content}></a>
-                          </blockquote>
-                          <script async src="//www.instagram.com/embed.js"></script>
+                        <div className="my-8 aspect-video">
+                          <iframe {...iframeProps} className="w-full h-full rounded-lg" />
                         </div>
                       );
                     }
-                  }
-                    
-                  if (content.includes('facebook.com')) {
-                    return (
-                      <div className="my-8">
-                        <div 
-                          dangerouslySetInnerHTML={{
-                            __html: `<div class="fb-post" data-href="${content}"></div><script async defer src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.2"></script>`
-                          }}
-                        />
-                      </div>
-                    );
-                  }
-                  
-                  return <p>{children}</p>;
-                }
-              }}
-            >
-              {news.contenido}
-            </ReactMarkdown>
-          </div>
 
-          {/* Related news section moved after content */}
-          {relatedNews.length > 0 && (
-            <section className="mt-16 border-t border-white/10 pt-16">
-              <h2 className="text-3xl font-bold text-white mb-8">Noticias relacionadas</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {relatedNews.map((item, index) => (
-                  <motion.article
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="group bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1"
-                  >
-                    <Link to={`/noticias/${item.slug}`} className="block">
-                      {item.imagen?.url && (
-                        <div className="aspect-video overflow-hidden">
-                          <img
-                            src={item.imagen.url}
-                            alt={item.title}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    const content = node.children[0]?.value;
+                    
+                    if (!content) {
+                      return <p>{children}</p>;
+                    }
+
+                    if (content.includes('twitter.com') || content.includes('x.com')) {
+                      return (
+                        <div className="my-8">
+                          <div 
+                            dangerouslySetInnerHTML={{ 
+                              __html: `<blockquote class="twitter-tweet" data-theme="dark"><a href="${content}"></a></blockquote><script async src="https://platform.twitter.com/widgets.js"></script>`
+                            }} 
                           />
                         </div>
-                      )}
-                      <div className="p-6">
-                        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-                          {item.title}
-                        </h3>
-                        <p className="text-gray-400 line-clamp-2">
-                          {item.description}
-                        </p>
-                      </div>
-                    </Link>
-                  </motion.article>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+                      );
+                    }
+                    
+                    if (content.includes('instagram.com/p/')) {
+                      const postId = content.split('/p/')[1]?.split('/')[0];
+                      if (postId) {
+                        return (
+                          <div className="my-8">
+                            <blockquote
+                              className="instagram-media"
+                              data-instgrm-permalink={content}
+                              data-instgrm-version="14"
+                            >
+                              <a href={content}></a>
+                            </blockquote>
+                            <script async src="//www.instagram.com/embed.js"></script>
+                          </div>
+                        );
+                      }
+                    }
+                    
+                    if (content.includes('facebook.com')) {
+                      return (
+                        <div className="my-8">
+                          <div 
+                            dangerouslySetInnerHTML={{
+                              __html: `<div class="fb-post" data-href="${content}"></div><script async defer src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.2"></script>`
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+                    
+                    return <p>{children}</p>;
+                  }
+                }}
+              >
+                {news.contenido}
+              </ReactMarkdown>
+            </div>
 
-        {/* Loading indicator for next article */}
-        {isLoadingNext && (
-          <div ref={loadingRef} className="py-12 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-400 mt-4">Cargando siguiente artículo...</p>
+            {/* Related news section moved after content */}
+            {relatedNews.length > 0 && (
+              <section className="mt-16 border-t border-white/10 pt-16">
+                <h2 className="text-3xl font-bold text-white mb-8">Noticias relacionadas</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {relatedNews.map((item, index) => (
+                    <motion.article
+                      key={item.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="group bg-white/5 backdrop-blur-sm rounded-xl overflow-hidden hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-1"
+                    >
+                      <Link to={`/noticias/${item.slug}`} className="block">
+                        {item.imagen?.url && (
+                          <div className="aspect-video overflow-hidden">
+                            <img
+                              src={item.imagen.url}
+                              alt={item.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                          </div>
+                        )}
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                            {item.title}
+                          </h3>
+                          <p className="text-gray-400 line-clamp-2">
+                            {item.description}
+                          </p>
+                        </div>
+                      </Link>
+                    </motion.article>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
-        )}
-      </motion.div>
-    </article>
+
+          {/* Loading indicator for next article */}
+          {isLoadingNext && (
+            <div ref={loadingRef} className="py-12 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+              <p className="text-gray-400 mt-4">Cargando siguiente artículo...</p>
+            </div>
+          )}
+        </motion.div>
+      </article>
+    </>
   );
 }
 
