@@ -1,7 +1,7 @@
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { Player } from './Player';
-import { CitySelectorModal } from '../Layout/CitySelectorModal';
+import { CitySelectorModal } from './CitySelectorModal';
 
 export function Layout({ children }) {
   return (

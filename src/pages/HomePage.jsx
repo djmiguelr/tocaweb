@@ -1,5 +1,5 @@
 import { useCity } from '../context/CityContext';
-import { TocaExitos } from '../components/Home/TocaExitos';
+import { TocaExitosSection } from '../components/Home/TocaExitosSection';
 import { Link } from 'react-router-dom';
 import { BiPlay } from 'react-icons/bi';
 import { MainSlider } from '../components/Home/MainSlider';
@@ -68,7 +68,7 @@ const HomePageComponent = memo(function HomePageComponent() {
             </section>
 
             <section>
-              <TocaExitos />
+              <TocaExitosSection />
             </section>
 
             <section className="bg-[#1C1C1C] rounded-xl p-6">

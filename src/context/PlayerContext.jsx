@@ -1,61 +1,31 @@
-import { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import { constants } from '../services/api';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import { useCity } from './CityContext';
 
-// Crear el contexto
-const PlayerContext = createContext(null);
+const PlayerContext = createContext();
 
-// Hook personalizado
-function usePlayer() {
-  const context = useContext(PlayerContext);
-  if (!context) {
-    throw new Error('usePlayer debe usarse dentro de un PlayerProvider');
-  }
-  return context;
-}
-
-// Provider Component
 export function PlayerProvider({ children }) {
-  // Estados
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isLiveStream, setIsLiveStream] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [queue, setQueue] = useState([]);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [showCitySelector, setShowCitySelector] = useState(false);
+  const [volume, setVolume] = useState(() => {
+    const savedVolume = localStorage.getItem('playerVolume');
+    return savedVolume !== null ? parseFloat(savedVolume) : 1;
+  });
+  const [isMuted, setIsMuted] = useState(() => {
+    const savedMuted = localStorage.getItem('playerMuted');
+    return savedMuted === 'true';
+  });
 
-  // Referencias
   const audioRef = useRef(null);
+  const previousVolume = useRef(volume);
 
-  // Añadir estado para controlar si hubo interacción
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
-  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const { selectedCity } = useCity();
 
-  // Inicializar el reproductor de audio
+  // Cleanup audio on unmount
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.preload = 'auto';
-      
-      // Configurar eventos del audio
-      audioRef.current.addEventListener('playing', () => setIsPlaying(true));
-      audioRef.current.addEventListener('pause', () => setIsPlaying(false));
-      audioRef.current.addEventListener('ended', () => {
-        setIsPlaying(false);
-        setCurrentTrack(null);
-      });
-      audioRef.current.addEventListener('error', (e) => {
-        console.error('Error en audio:', e);
-        if (!hasUserInteracted) {
-          setAutoplayBlocked(true);
-        } else {
-          setError('Error al reproducir el audio');
-        }
-        setIsPlaying(false);
-      });
-    }
-
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -63,84 +33,81 @@ export function PlayerProvider({ children }) {
         audioRef.current = null;
       }
     };
-  }, [hasUserInteracted]);
+  }, []);
 
-  // Función para volver a la transmisión en vivo
-  const returnToLive = useCallback(async (city) => {
-    if (!city?.stream_url) {
-      setError('URL de stream no disponible');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Asegurarse de que audioRef existe
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-        audioRef.current.preload = 'auto';
-      }
-
-      // Detener cualquier reproducción actual
-      audioRef.current.pause();
-      audioRef.current.src = '';
-
-      // Configurar nuevo stream
-      audioRef.current.src = city.stream_url;
-
-      if (hasUserInteracted) {
-        await audioRef.current.play();
-        setIsPlaying(true);
-      } else {
-        setAutoplayBlocked(true);
-      }
-      
-      setIsLiveStream(true);
-      setCurrentTrack(null);
-    } catch (err) {
-      console.error('Error al volver al stream:', err);
-      if (err.name === 'NotAllowedError') {
-        setAutoplayBlocked(true);
-      } else {
-        setError('No se pudo conectar al stream en vivo');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [hasUserInteracted]);
-
-  // Función para reproducir una pista
-  const playTrack = useCallback(async (track) => {
-    if (!audioRef.current || !track?.song?.url) {
-      throw new Error('No se puede reproducir la pista');
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Detener cualquier reproducción actual
-      audioRef.current.pause();
-      audioRef.current.src = '';
-
-      // Configurar el nuevo audio
-      audioRef.current.src = track.song.url;
-      await audioRef.current.play();
-
-      setCurrentTrack(track);
-      setIsLiveStream(false);
-      setIsPlaying(true);
-    } catch (err) {
-      console.error('Error al reproducir track:', err);
-      setError('Error al reproducir la pista');
-      throw err;
-    } finally {
-      setIsLoading(false);
+  // MediaSession API setup
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => {
+        togglePlay();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        togglePlay();
+      });
+      navigator.mediaSession.setActionHandler('stop', () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          setIsPlaying(false);
+        }
+      });
     }
   }, []);
 
-  // Función para alternar play/pause
+  // Update MediaSession metadata when track changes
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      if (isLiveStream && selectedCity) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: selectedCity.name,
+          artist: selectedCity.frequency,
+          artwork: selectedCity.coverlog ? [
+            { src: selectedCity.coverlog.url, sizes: '512x512', type: 'image/jpeg' }
+          ] : []
+        });
+      } else if (currentTrack) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: currentTrack.title,
+          artist: currentTrack.artist,
+          artwork: currentTrack.cover ? [
+            { src: currentTrack.cover.url, sizes: '512x512', type: 'image/jpeg' }
+          ] : []
+        });
+      }
+    }
+  }, [currentTrack, isLiveStream, selectedCity]);
+
+  // Handle volume changes
+  const handleVolumeChange = useCallback((newVolume) => {
+    if (!audioRef.current) return;
+    
+    const isMutedState = newVolume === 0;
+    if (!isMutedState) {
+      previousVolume.current = newVolume;
+    }
+    
+    setVolume(newVolume);
+    setIsMuted(isMutedState);
+    audioRef.current.volume = isMutedState ? 0 : newVolume;
+    
+    localStorage.setItem('playerVolume', newVolume);
+    localStorage.setItem('playerMuted', isMutedState);
+  }, []);
+
+  // Toggle mute
+  const toggleMute = useCallback(() => {
+    if (!audioRef.current) return;
+    
+    if (isMuted) {
+      const volumeToRestore = previousVolume.current || 1;
+      handleVolumeChange(volumeToRestore);
+    } else {
+      previousVolume.current = volume;
+      handleVolumeChange(0);
+    }
+  }, [isMuted, volume, handleVolumeChange]);
+
+  // Toggle play/pause
   const togglePlay = useCallback(async () => {
     if (!audioRef.current) return;
 
@@ -149,76 +116,127 @@ export function PlayerProvider({ children }) {
         audioRef.current.pause();
         setIsPlaying(false);
       } else {
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          await playPromise;
-          setIsPlaying(true);
-        }
-      }
-    } catch (err) {
-      console.error('Error al reproducir:', err);
-      setError('Error al reproducir audio');
-    }
-  }, [isPlaying]);
-
-  // Implementar playPreviousTrack si lo necesitas
-  const playPreviousTrack = useCallback(() => {
-    // Implementar lógica para reproducir la pista anterior
-    console.log('Función playPreviousTrack no implementada');
-  }, []);
-
-  // Implementar playNextTrack si lo necesitas
-  const playNextTrack = useCallback(() => {
-    // Implementar lógica para reproducir la siguiente pista
-    console.log('Función playNextTrack no implementada');
-  }, []);
-
-  // Función para manejar la primera interacción
-  const handleFirstInteraction = useCallback(async () => {
-    setHasUserInteracted(true);
-    setAutoplayBlocked(false);
-    
-    if (audioRef.current && audioRef.current.src && !isPlaying) {
-      try {
         await audioRef.current.play();
         setIsPlaying(true);
-      } catch (err) {
-        console.error('Error al reproducir después de interacción:', err);
-        setError('Error al reproducir el audio');
       }
+    } catch (error) {
+      console.error('Error toggling play state:', error);
+      setError('Error al reproducir el audio');
+      setIsPlaying(false);
     }
   }, [isPlaying]);
+
+  // Play live stream
+  const playLiveStream = useCallback(async (city) => {
+    if (!city?.stream_url) {
+      setError('Esta ciudad no tiene transmisión en vivo disponible');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Stop current audio if any
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+
+      // Create new audio instance
+      audioRef.current = new Audio(city.stream_url);
+      audioRef.current.volume = isMuted ? 0 : volume;
+
+      await audioRef.current.play();
+      setIsPlaying(true);
+      setIsLiveStream(true);
+      setCurrentTrack(null);
+    } catch (error) {
+      console.error('Error playing live stream:', error);
+      setError('Error al reproducir la transmisión en vivo');
+      setIsPlaying(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [volume, isMuted]);
+
+  // Play track
+  const playTrack = useCallback(async (track) => {
+    if (!track?.song?.url) {
+      setError('Esta pista no tiene audio disponible');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Stop current audio if any
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+      }
+
+      // Create new audio instance
+      audioRef.current = new Audio(track.song.url);
+      audioRef.current.volume = isMuted ? 0 : volume;
+
+      await audioRef.current.play();
+      setIsPlaying(true);
+      setIsLiveStream(false);
+      setCurrentTrack(track);
+    } catch (error) {
+      console.error('Error playing track:', error);
+      setError('Error al reproducir la pista');
+      setIsPlaying(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [volume, isMuted]);
+
+  // Update volume when it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+    }
+  }, [volume, isMuted]);
+
+  // Handle city change
+  useEffect(() => {
+    if (selectedCity?.stream_url && isLiveStream) {
+      playLiveStream(selectedCity);
+    }
+  }, [selectedCity, isLiveStream, playLiveStream]);
 
   const value = {
     currentTrack,
-    setCurrentTrack,
     isLiveStream,
-    setIsLiveStream,
     isPlaying,
-    setIsPlaying,
     isLoading,
-    setIsLoading,
     error,
-    setError,
-    queue,
-    setQueue,
-    progress,
-    setProgress,
-    duration,
-    setDuration,
-    audioRef,
-    playTrack,
+    volume,
+    isMuted,
+    showCitySelector,
+    setShowCitySelector,
     togglePlay,
-    returnToLive,
-    playPreviousTrack,
-    playNextTrack,
-    autoplayBlocked,
-    handleFirstInteraction,
-    hasUserInteracted
+    handleVolumeChange,
+    toggleMute,
+    playLiveStream,
+    playTrack,
+    setError
   };
 
-  return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
+  return (
+    <PlayerContext.Provider value={value}>
+      {children}
+    </PlayerContext.Provider>
+  );
 }
 
-// Exportar todo junto
-export { usePlayer };
+export function usePlayer() {
+  const context = useContext(PlayerContext);
+  if (!context) {
+    throw new Error('usePlayer must be used within a PlayerProvider');
+  }
+  return context;
+}

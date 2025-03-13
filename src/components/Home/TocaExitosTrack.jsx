@@ -1,68 +1,61 @@
-import React, { memo } from 'react';
-import { motion } from 'framer-motion';
+import React from 'react';
 import { BiPlay, BiPause } from 'react-icons/bi';
-import { BASE_URL } from '../../services/api';
+import { usePlayer } from '../../context/PlayerContext';
 
-export const TocaExitosTrack = memo(function TocaExitosTrack({
-  item,
-  index,
-  currentTrack,
-  isPlaying,
-  isPlayerLoading,
-  loadingTrackId,
-  onPlay
-}) {
+export function TocaExitosTrack({ track, rank }) {
+  const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayer();
+
+  const isCurrentTrack = currentTrack?.documentId === track.documentId;
+  const isThisPlaying = isCurrentTrack && isPlaying;
+
+  const handleClick = () => {
+    if (isCurrentTrack) {
+      togglePlay();
+    } else {
+      playTrack(track);
+    }
+  };
+
   return (
-    <motion.div
-      key={item.documentId}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="relative group w-full sm:w-full md:w-full lg:w-full xl:w-full flex-shrink-0 bg-white/5 rounded-lg overflow-hidden hover:bg-white/10 transition-colors duration-300"
+    <div 
+      className={`group relative flex items-center gap-4 p-4 rounded-xl transition-colors ${
+        isCurrentTrack ? 'bg-primary/20' : 'hover:bg-white/5'
+      }`}
     >
-      <div className="flex flex-col p-4">
-        {/* Image Container */}
-        <div className="relative w-full aspect-square mb-4 overflow-hidden rounded-lg">
-          <img
-            src={item.cover?.url ? `${BASE_URL}${item.cover.url}` : '/placeholder-cover.jpg'}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            onError={(e) => {
-              e.target.src = '/placeholder-cover.jpg';
-            }}
-            loading="lazy"
-          />
-          
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-lg">
-            <button
-              onClick={() => onPlay(item)}
-              disabled={isPlayerLoading || loadingTrackId === item.documentId}
-              className={`absolute bottom-4 right-4 w-12 h-12 rounded-full 
-                ${currentTrack?.documentId === item.documentId && isPlaying ? 'bg-green-500' : 'bg-white'} 
-                flex items-center justify-center shadow-lg transform 
-                translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 
-                transition-all duration-300
-                ${(isPlayerLoading || loadingTrackId === item.documentId) ? 'opacity-50 cursor-wait' : ''}`}
-            >
-              {loadingTrackId === item.documentId ? (
-                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-              ) : currentTrack?.documentId === item.documentId && isPlaying ? (
-                <BiPause className="w-6 h-6 text-black" />
-              ) : (
-                <BiPlay className="w-6 h-6 text-black ml-1" />
-              )}
-            </button>
-          </div>
-        </div>
-        
-        <div className="flex-grow flex items-start gap-4">
-          <div className="text-4xl font-bold text-primary/80">{item.rank}</div>
-          <div className="flex-1">
-            <h3 className="text-white font-medium truncate">{item.title}</h3>
-            <p className="text-sm text-gray-400 truncate">{item.artist}</p>
-          </div>
-        </div>
+      {/* Rank */}
+      <div className="w-12 h-12 bg-white/5 rounded-lg flex items-center justify-center text-2xl font-bold text-white">
+        {rank}
       </div>
-    </motion.div>
+
+      {/* Cover */}
+      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white/5">
+        <img
+          src={track.cover?.url}
+          alt={track.title}
+          className="w-full h-full object-cover"
+        />
+        <button
+          onClick={handleClick}
+          className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          {isThisPlaying ? (
+            <BiPause className="w-6 h-6 text-white" />
+          ) : (
+            <BiPlay className="w-6 h-6 text-white ml-1" />
+          )}
+        </button>
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-white truncate">{track.title}</h3>
+        <p className="text-sm text-white/60 truncate">{track.artist}</p>
+      </div>
+
+      {/* Playing Indicator */}
+      {isThisPlaying && (
+        <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+      )}
+    </div>
   );
-});
+}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BiArrowBack, BiShareAlt, BiCopy } from 'react-icons/bi';
+import { BiArrowBack, BiShareAlt, BiCopy, BiPlay } from 'react-icons/bi';
 import { FaFacebookF, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 import { apiService } from '../services/api';
 import { toast } from 'sonner';
@@ -247,18 +247,24 @@ export function EntrevistaDetailPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="relative aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-12 group"
+                  className="relative aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-12"
                 >
-                  <iframe
-                    src={`https://www.youtube.com/embed/${entrevista.youtubeId}`}
-                    title={entrevista.title}
-                    className="w-full h-full"
-                    allowFullScreen
-                    onPlay={() => setIsVideoPlaying(true)}
-                    onPause={() => setIsVideoPlaying(false)}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  />
-                  <div className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${isVideoPlaying ? 'opacity-0' : 'opacity-100'}`} />
+                  {entrevista.youtubeId ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${entrevista.youtubeId}`}
+                      title={entrevista.title}
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  ) : entrevista.portada?.url && (
+                    <img
+                      src={entrevista.portada.url}
+                      alt={entrevista.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </motion.div>
 
                 <motion.div 

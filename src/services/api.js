@@ -28,13 +28,23 @@ const api = axios.create({
 
 // Función helper para procesar URLs
 const getMediaUrl = (media) => {
-  if (!media?.url || typeof media.url !== 'string') {
+  if (!media) return null;
+  
+  // Si media es un string, asumimos que es la URL directamente
+  if (typeof media === 'string') {
+    return media.startsWith('http') ? media : `${API_URL}${media}`;
+  }
+  
+  // Si no tiene URL o no es string, retornamos null
+  if (!media.url || typeof media.url !== 'string') {
     return null;
   }
+  
   // Si la URL ya es absoluta, la retornamos tal cual
   if (media.url.startsWith('http')) {
     return media.url;
   }
+  
   // Si no, la concatenamos con la URL base
   return `${API_URL}${media.url}`;
 };
@@ -43,26 +53,24 @@ const getMediaUrl = (media) => {
 const processTocaExitos = (tocaExitos) => {
   if (!Array.isArray(tocaExitos)) return [];
 
-  return tocaExitos.map(item => {
-    // Asegurarnos de que las URLs sean correctas
-    const songUrl = item.song?.url ? getMediaUrl(item.song) : null;
-    const coverUrl = item.cover?.url ? getMediaUrl(item.cover) : null;
-
-    return {
+  return tocaExitos
+    .filter(item => item && item.title && item.artist)
+    .map(item => ({
       id: item.id,
-      title: item.title || '',
-      artist: item.artist || '',
+      documentId: item.documentId || item.id,
+      title: item.title,
+      artist: item.artist,
       rank: item.rank || 0,
-      cover: coverUrl ? {
-        url: coverUrl,
+      cover: item.cover ? {
+        url: getMediaUrl(item.cover),
         documentId: item.cover.documentId
       } : null,
-      song: songUrl ? {
-        url: songUrl,
+      song: item.song ? {
+        url: getMediaUrl(item.song),
         documentId: item.song.documentId
       } : null
-    };
-  });
+    }))
+    .sort((a, b) => (a.rank || 0) - (b.rank || 0));
 };
 
 // Función helper para procesar datos de ciudad
@@ -91,6 +99,13 @@ const processCityData = (cityData) => {
     name: cityData.name,
     frequency: cityData.frequency,
     stream_url: processStreamUrl(cityData.stream_url),
+    coverlog: cityData.coverlog ? {
+      id: cityData.coverlog.id || null,
+      documentId: cityData.coverlog.documentId || null,
+      url: getMediaUrl(cityData.coverlog.url || cityData.coverlog)
+    } : cityData.coverlog_url ? {
+      url: getMediaUrl(cityData.coverlog_url)
+    } : null,
     apps: cityData.apps?.[0] ? {
       android: cityData.apps[0].android,
       ios: cityData.apps[0].ios
@@ -207,6 +222,31 @@ const processHeaderData = (headerData) => {
   };
 };
 
+// Función helper para extraer ID de YouTube
+const extractYoutubeId = (url) => {
+  if (!url) return null;
+  
+  // Si ya es un ID directo, lo retornamos
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+    return url;
+  }
+  
+  // Patrones comunes de URLs de YouTube
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  return null;
+};
+
 // Función helper para procesar entrevistas
 const processEntrevistasData = (data) => {
   if (!Array.isArray(data)) return [];
@@ -214,12 +254,12 @@ const processEntrevistasData = (data) => {
   return data.map(item => ({
     id: item.id,
     documentId: item.documentId,
-    youtubeId: item.urlyoutube,
+    youtubeId: extractYoutubeId(item.urlyoutube),
     title: item.titulo,
     description: item.description,
     slug: item.slugentre,
     portada: item.portada ? {
-      url: `${API_URL}${item.portada.url}`,
+      url: getMediaUrl(item.portada),
       documentId: item.portada.documentId
     } : null
   }));
@@ -396,8 +436,16 @@ const apiService = {
 
   async getNextNews(currentSlug) {
     try {
+      // First get the current news to get its category
+      const currentNews = await this.getNewsBySlug(currentSlug);
+      if (!currentNews) {
+        return [];
+      }
+
+      // Then get news from the same category, excluding the current one
       const response = await api.get('/noticias', {
         params: {
+          'filters[categoria][$eq]': currentNews.categoria,
           'filters[slug][$ne]': currentSlug,
           'populate[Imagendestacada][fields]': 'url',
           'populate[fields][0]': 'title',
@@ -417,8 +465,8 @@ const apiService = {
       const processedNews = processNewsData([response.data.data[0]]);
       return processedNews[0] || null;
     } catch (error) {
-      console.error('Error al obtener siguiente noticia:', error);
-      return null;
+      console.error('Error getting related news:', error);
+      return [];
     }
   },
 
@@ -537,6 +585,16 @@ const apiService = {
     } catch (error) {
       console.error('Error getting related news:', error);
       return [];
+    }
+  },
+
+  async getTocaExitos() {
+    try {
+      const response = await api.get('/toca-exitos');
+      return processTocaExitos(response.data.data);
+    } catch (error) {
+      console.error('Error fetching Toca Éxitos:', error);
+      throw new Error('Error al cargar Toca Éxitos');
     }
   }
 };
