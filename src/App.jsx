@@ -5,8 +5,7 @@ import { HeaderProvider } from './context/HeaderContext';
 import { Layout } from './components/Layout/Layout';
 import { HomePage } from './pages/HomePage';
 import { TocaExitosPage } from './pages/TocaExitos';
-import { NewsPage } from './pages/NewsPage';
-import { NewsDetailPage } from './pages/NewsDetailPage';
+
 import { EntrevistasPage } from './pages/EntrevistasPage';
 import { EntrevistaDetailPage } from './pages/EntrevistaDetailPage';
 import { LivePage } from './pages/LivePage';
@@ -33,8 +32,7 @@ export function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/toca-exitos" element={<TocaExitosPage />} />
-                <Route path="/noticias" element={<NewsPage />} />
-                <Route path="/noticias/:slug" element={<NewsDetailPage />} />
+
                 <Route path="/entrevistas" element={<EntrevistasPage />} />
                 <Route path="/entrevistas/:slug" element={<EntrevistaDetailPage />} />
                 <Route path="/live" element={<LivePage />} />

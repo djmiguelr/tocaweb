@@ -36,15 +36,22 @@ export function CitySelector({ onClose }) {
               }`}
             >
               <div className="w-12 h-12 rounded-lg overflow-hidden bg-black/20">
-                {city.coverlog?.url ? (
+                {city.coverlog ? (
                   <img
-                    src={city.coverlog.url}
+                    src={city.coverlog.formats?.small?.url || city.coverlog.url}
                     alt={city.name}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    width={city.coverlog.formats?.small?.width || city.coverlog.width}
+                    height={city.coverlog.formats?.small?.height || city.coverlog.height}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = city.coverlog.url;
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <MdRadio size={24} />
+                    <MdRadio className="text-white/40" size={24} />
                   </div>
                 )}
               </div>

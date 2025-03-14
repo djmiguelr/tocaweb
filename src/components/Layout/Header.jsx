@@ -59,7 +59,7 @@ export function Header() {
   };
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+    <header className={`fixed top-0 left-0 right-0 z-[80] transition-all duration-300 ${
       isScrolled ? 'bg-[#1C1C1C]/95 backdrop-blur-lg shadow-lg' : 'bg-[#1C1C1C]'
     }`}>
       <div className="container mx-auto px-4">
@@ -120,7 +120,7 @@ export function Header() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsMenuOpen(true)}
-              className="p-2 md:hidden hover:bg-white/5 rounded-full transition-colors text-white"
+              className={`p-2 md:hidden rounded-full transition-all ${isScrolled ? 'hover:bg-white/20 bg-white/10' : 'hover:bg-white/5'} text-white`}
             >
               <BiMenu className="w-6 h-6" />
             </motion.button>
@@ -131,13 +131,23 @@ export function Header() {
       {/* Menú móvil */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, x: '100%' }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: '100%' }}
-            transition={{ type: 'tween' }}
-            className="fixed inset-0 bg-[#1C1C1C] z-50"
-          >
+          <>
+            {/* Overlay de fondo */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150]"
+              onClick={() => setIsMenuOpen(false)}
+            />
+            {/* Panel del menú */}
+            <motion.div
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              transition={{ type: 'tween' }}
+              className="fixed top-0 right-0 bottom-0 w-full sm:w-80 bg-[#1C1C1C] shadow-xl z-[200] flex flex-col md:hidden"
+            >
             <div className="flex flex-col h-full">
               <div className="flex items-center justify-between p-4">
                 {renderLogo()}
@@ -151,7 +161,7 @@ export function Header() {
                 </motion.button>
               </div>
 
-              <nav className="flex-1 overflow-y-auto py-8">
+              <nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
                 {navigation.map((item) => (
                   <MobileNavLink 
                     key={item.path} 
@@ -164,6 +174,8 @@ export function Header() {
               </nav>
             </div>
           </motion.div>
+          </>
+
         )}
       </AnimatePresence>
     </header>
@@ -186,7 +198,7 @@ function MobileNavLink({ to, children, onClick }) {
     <Link
       to={to}
       onClick={onClick}
-      className="block px-6 py-4 text-lg font-medium text-white hover:text-primary transition-colors border-b border-white/10"
+      className="block px-6 py-3 text-base font-medium text-white hover:text-primary hover:bg-white/5 transition-colors"
     >
       {children}
     </Link>

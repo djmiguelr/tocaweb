@@ -30,7 +30,7 @@ export function Player() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-white/10 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-white/10 z-[100]">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
             {/* Info */}
@@ -43,11 +43,14 @@ export function Player() {
                 />
               ) : (
                 <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center overflow-hidden">
-                  {selectedCity?.coverlog?.url ? (
+                  {selectedCity?.coverlog ? (
                     <img 
-                      src={selectedCity.coverlog.url} 
-                      alt={selectedCity?.name}
+                      src={selectedCity.coverlog.formats?.thumbnail?.url || selectedCity.coverlog.url} 
+                      alt={selectedCity.name}
                       className="w-full h-full object-cover"
+                      loading="lazy"
+                      width={selectedCity.coverlog.formats?.thumbnail?.width || selectedCity.coverlog.width}
+                      height={selectedCity.coverlog.formats?.thumbnail?.height || selectedCity.coverlog.height}
                     />
                   ) : (
                     <MdRadio className="w-6 h-6 text-white/40" />
@@ -136,7 +139,7 @@ export function Player() {
 
       {/* Floating Back to Live Button for Mobile/Tablet */}
       {!isLiveStream && selectedCity && (
-        <div className="md:hidden fixed bottom-20 right-4 z-40">
+        <div className="md:hidden fixed bottom-20 right-4 z-[90]">
           <button
             onClick={() => playLiveStream(selectedCity)}
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-white hover:bg-primary-hover transition-colors shadow-lg"
@@ -153,7 +156,7 @@ export function Player() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-end md:items-center justify-center"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-end md:items-center justify-center"
             onClick={() => setShowCitySelector(false)}
           >
             <motion.div

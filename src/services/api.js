@@ -100,11 +100,26 @@ const processCityData = (cityData) => {
     frequency: cityData.frequency,
     stream_url: processStreamUrl(cityData.stream_url),
     coverlog: cityData.coverlog ? {
-      id: cityData.coverlog.id || null,
-      documentId: cityData.coverlog.documentId || null,
-      url: getMediaUrl(cityData.coverlog.url || cityData.coverlog)
-    } : cityData.coverlog_url ? {
-      url: getMediaUrl(cityData.coverlog_url)
+      id: cityData.coverlog.id,
+      documentId: cityData.coverlog.documentId,
+      name: cityData.coverlog.name,
+      width: cityData.coverlog.width,
+      height: cityData.coverlog.height,
+      url: getMediaUrl(cityData.coverlog.url),
+      formats: {
+        thumbnail: cityData.coverlog.formats?.thumbnail ? {
+          ...cityData.coverlog.formats.thumbnail,
+          url: getMediaUrl(cityData.coverlog.formats.thumbnail.url)
+        } : null,
+        small: cityData.coverlog.formats?.small ? {
+          ...cityData.coverlog.formats.small,
+          url: getMediaUrl(cityData.coverlog.formats.small.url)
+        } : null,
+        medium: cityData.coverlog.formats?.medium ? {
+          ...cityData.coverlog.formats.medium,
+          url: getMediaUrl(cityData.coverlog.formats.medium.url)
+        } : null
+      }
     } : null,
     apps: cityData.apps?.[0] ? {
       android: cityData.apps[0].android,
@@ -272,19 +287,19 @@ const apiService = {
       const response = await api.get('/ciudades', {
         params: {
           'filters[documentId][$eq]': cityId,
-          'populate[TocaExitos][fields][0]': 'title',
-          'populate[TocaExitos][fields][1]': 'artist',
-          'populate[TocaExitos][fields][2]': 'rank',
+          'populate[coverlog][fields]': 'url',
+          'populate[Programa][fields]': 'program_name,description,start_time,end_time,days',
+          'populate[Programa][populate][imgprogram][fields]': 'url',
+          'populate[Redes][fields]': 'plataforma,URL',
+          'populate[TocaExitos][fields]': 'title,artist,rank',
           'populate[TocaExitos][populate][cover][fields]': 'url',
           'populate[TocaExitos][populate][song][fields]': 'url',
-          'populate[apps][fields][0]': 'android',
-          'populate[apps][fields][1]': 'ios',
-          'populate[Redes][fields][0]': 'plataforma',
-          'populate[Redes][fields][1]': 'URL',
-          'populate[Locutor][fields][0]': 'name',
-          'populate[Locutor][fields][1]': 'biodj',
-          'populate[Locutor][fields][2]': 'cargo',
-          'populate[Locutor][populate][coverdj][fields]': 'url'
+          'populate[apps][fields]': 'android,ios',
+          'populate[Locutor][fields]': 'name,biodj,cargo',
+          'populate[Locutor][populate][coverdj][fields]': 'url',
+          'populate[Live][fields]': 'titulo,descripcion,url',
+          'populate[logo][fields]': 'url',
+          'fields': 'name,frequency,stream_url'
         }
       });
 
@@ -301,16 +316,29 @@ const apiService = {
 
   async getDefaultCities() {
     try {
-      const results = await Promise.allSettled([
-        this.getCity(CITY_IDS.ZONA_CENTRO),
-        this.getCity(CITY_IDS.BOYACA),
-        this.getCity(CITY_IDS.TOLIMA)
-      ]);
+      const response = await api.get('/ciudades', {
+        params: {
+          'populate[coverlog][fields]': 'url',
+          'populate[Programa][fields]': 'program_name,description,start_time,end_time,days',
+          'populate[Programa][populate][imgprogram][fields]': 'url',
+          'populate[Redes][fields]': 'plataforma,URL',
+          'populate[TocaExitos][fields]': 'title,artist,rank',
+          'populate[TocaExitos][populate][cover][fields]': 'url',
+          'populate[TocaExitos][populate][song][fields]': 'url',
+          'populate[apps][fields]': 'android,ios',
+          'populate[Locutor][fields]': 'name,biodj,cargo',
+          'populate[Locutor][populate][coverdj][fields]': 'url',
+          'populate[Live][fields]': 'titulo,descripcion,url',
+          'populate[logo][fields]': 'url',
+          'fields': 'name,frequency,stream_url'
+        }
+      });
 
-      // Filtrar solo las ciudades que se resolvieron correctamente
-      return results
-        .filter(result => result.status === 'fulfilled')
-        .map(result => result.value);
+      if (!response.data?.data) {
+        throw new Error('No se encontraron ciudades');
+      }
+
+      return response.data.data.map(cityData => processCityData(cityData));
     } catch (error) {
       console.error('Error al obtener ciudades predefinidas:', error);
       throw error;

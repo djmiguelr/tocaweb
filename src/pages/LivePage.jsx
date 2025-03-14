@@ -4,12 +4,39 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { constants } from '../services/api';
 import { SEO } from '../components/SEO';
+import { FaFacebook, FaTwitter, FaWhatsapp, FaShareAlt } from 'react-icons/fa';
 
 export function LivePage() {
   const { selectedCity } = useCity();
   const [liveData, setLiveData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const handleShare = (platform) => {
+    const shareUrl = window.location.href;
+    const shareTitle = liveData?.titulo || `Transmisión en vivo - ${selectedCity?.name}`;
+    const shareText = liveData?.descripcion || `Transmisión en vivo desde ${selectedCity?.name}`;
+
+    switch (platform) {
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank');
+        break;
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${shareTitle}\n${shareText}\n${shareUrl}`)}`, '_blank');
+        break;
+      default:
+        if (navigator.share) {
+          navigator.share({
+            title: shareTitle,
+            text: shareText,
+            url: shareUrl,
+          });
+        }
+    }
+  };
 
   useEffect(() => {
     const fetchLiveData = async () => {
@@ -19,31 +46,30 @@ export function LivePage() {
       setError(null);
 
       try {
-        const documentId = selectedCity.documentId || selectedCity.id;
-        const response = await axios.get(`${constants.API_BASE}/ciudades/${documentId}?populate[Live][populate]=*`);
-        const cityData = response.data.data;
-        
-        // Extract all available data from the response
-        const cityAttributes = cityData?.attributes || {};
-        const liveData = cityAttributes?.Live?.data || [];
-        const liveAttributes = liveData[0]?.attributes || {};
-        
-        // Set live data with enhanced information
-        setLiveData({
-          titulo: liveAttributes.titulo || cityAttributes.nombre || selectedCity.name || 'Transmisión en vivo',
-          descripcion: liveAttributes.descripcion || cityAttributes.descripcion || `Transmisión en vivo desde ${selectedCity.name}`,
-          url: liveAttributes.url || '',
-          frequency: cityAttributes.frequency || selectedCity.frequency,
-          coverImage: cityAttributes.cover?.data?.attributes?.url || selectedCity.cover_url,
-          status: liveAttributes.status || 'offline',
-          schedule: liveAttributes.schedule || null
+        const response = await axios.get(`${constants.API_BASE}/ciudades/${selectedCity.documentId}`, {
+          params: {
+            'populate[Live][fields]': 'titulo,descripcion,url',
+            'populate[Live][populate]': '*',
+            'fields': 'name,frequency'
+          }
         });
 
-        // Only show error if there's no URL and no schedule information
-        if (!liveAttributes.url && !liveAttributes.schedule) {
+        const cityData = response.data.data;
+        if (!cityData) {
+          throw new Error('Ciudad no encontrada');
+        }
+
+        const liveData = cityData.attributes.Live?.data?.[0]?.attributes;
+        
+        setLiveData({
+          titulo: liveData?.titulo || `Transmisión en vivo - ${selectedCity.name}`,
+          descripcion: liveData?.descripcion || `Transmisión en vivo desde ${selectedCity.name}`,
+          url: liveData?.url || null,
+          frequency: cityData.attributes.frequency
+        });
+
+        if (!liveData?.url) {
           setError('En este momento no hay transmisión en vivo. Vuelve más tarde para disfrutar del contenido en directo.');
-        } else {
-          setError(null);
         }
       } catch (err) {
         console.error('Error fetching live data:', err);
@@ -150,42 +176,27 @@ export function LivePage() {
           >
             {/* Enhanced header with more information */}
             <header className="mb-8">
-              <div className="flex items-center gap-4 mb-6">
-                {liveData?.coverImage && (
-                  <img 
-                    src={liveData.coverImage}
-                    alt={liveData.titulo}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
+              <div className="flex flex-col gap-4">
+                <h1 className="text-3xl font-bold text-white">
+                  {liveData?.titulo || selectedCity?.name || 'Transmisión en vivo'}
+                </h1>
+                <p className="text-gray-400 text-lg">
+                  {liveData?.descripcion || `Transmisión en vivo desde ${selectedCity?.name || 'nuestra ciudad'}`}
+                </p>
+                {liveData?.frequency && (
+                  <div className="text-primary font-medium">
+                    {liveData.frequency}
+                  </div>
                 )}
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">
-                    {liveData?.titulo || selectedCity?.name || 'Transmisión en vivo'}
-                  </h1>
-                  {liveData?.frequency && (
-                    <div className="text-primary font-medium mb-2">
-                      {liveData.frequency}
-                    </div>
-                  )}
-                  <p className="text-gray-400 text-lg">
-                    {liveData?.descripcion || `Transmisión en vivo desde ${selectedCity?.name || 'nuestra ciudad'}`}
-                  </p>
-                </div>
               </div>
-              {liveData?.schedule && (
-                <div className="bg-white/5 rounded-lg p-4 mt-4">
-                  <h2 className="text-white font-medium mb-2">Horario de transmisión</h2>
-                  <p className="text-gray-400">{liveData.schedule}</p>
-                </div>
-              )}
             </header>
 
-            {/* Only show video container if URL is available */}
+            {/* Video container and share buttons */}
             {liveData?.url && (
               <div className="relative">
                 <div className="aspect-video w-full bg-black rounded-2xl overflow-hidden shadow-2xl mb-8">
                   <iframe
-                    src={liveData.url}
+                    src={`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(liveData.url)}&show_text=false&t=0`}
                     width="100%"
                     height="100%"
                     style={{ border: 'none', overflow: 'hidden' }}
@@ -198,42 +209,45 @@ export function LivePage() {
                   />
                 </div>
 
-                <div className="absolute top-4 right-4">
+                {/* Share buttons */}
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button
+                    onClick={() => handleShare('facebook')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors"
+                    aria-label="Compartir en Facebook"
+                  >
+                    <FaFacebook className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('twitter')}
+                    className="bg-sky-500 hover:bg-sky-600 text-white p-2 rounded-full transition-colors"
+                    aria-label="Compartir en Twitter"
+                  >
+                    <FaTwitter className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare('whatsapp')}
+                    className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full transition-colors"
+                    aria-label="Compartir en WhatsApp"
+                  >
+                    <FaWhatsapp className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => handleShare()}
+                    className="bg-gray-600 hover:bg-gray-700 text-white p-2 rounded-full transition-colors"
+                    aria-label="Más opciones para compartir"
+                  >
+                    <FaShareAlt className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="absolute top-4 left-4">
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-red-500 text-white text-sm font-medium">
                     <span className="w-2 h-2 bg-white rounded-full mr-2 animate-pulse" />
                     En vivo
                   </span>
                 </div>
               </div>
-            )}
-
-            {/* Show error message if present */}
-            {error && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-4"
-              >
-                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-8 text-center">
-                  <div className="mb-4">
-                    <div className="w-16 h-16 mx-auto bg-white/10 rounded-full flex items-center justify-center mb-4">
-                      <span className="text-2xl">📺</span>
-                    </div>
-                    <p className="text-white/80 font-medium text-lg mb-2">{error}</p>
-                    {liveData?.schedule && (
-                      <p className="text-white/60 text-sm">
-                        Próxima transmisión: {liveData.schedule}
-                      </p>
-                    )}
-                  </div>
-                  <button 
-                    onClick={() => window.location.reload()} 
-                    className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-                  >
-                    Actualizar página
-                  </button>
-                </div>
-              </motion.div>
             )}
           </motion.div>
         </div>

@@ -1,9 +1,10 @@
 import { useCity } from '../context/CityContext';
+import { usePlayer } from '../context/PlayerContext';
 import { TocaExitosSection } from '../components/Home/TocaExitosSection';
 import { Link } from 'react-router-dom';
-import { BiPlay } from 'react-icons/bi';
+import { BiPlay, BiPause } from 'react-icons/bi';
 import { MainSlider } from '../components/Home/MainSlider';
-import { NewsSection } from '../components/Home/NewsSection';
+
 import { memo } from 'react';
 import { EntrevistasSection } from '../components/Home/EntrevistasSection';
 import { LocutoresSection } from '../components/Home/LocutoresSection';
@@ -11,6 +12,7 @@ import { SEO } from '../components/SEO';
 
 const HomePageComponent = memo(function HomePageComponent() {
   const { selectedCity, isLoading, error } = useCity();
+  const { isPlaying, playLiveStream, togglePlay } = usePlayer();
 
   // Agregar logs para debuggear
   console.log('HomePage render:', {
@@ -60,19 +62,28 @@ const HomePageComponent = memo(function HomePageComponent() {
                 <p className="text-xl text-gray-300 mb-6">
                   {selectedCity.frequency} - La mejor música las 24 horas
                 </p>
-                <button className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full flex items-center space-x-2 transition-all">
-                  <BiPlay className="w-6 h-6" />
-                  <span>Escuchar ahora</span>
+                <button 
+                  onClick={() => {
+                    if (!isPlaying) {
+                      playLiveStream(selectedCity);
+                    } else {
+                      togglePlay();
+                    }
+                  }} 
+                  className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-full flex items-center space-x-2 transition-all"
+                >
+                  {isPlaying ? (
+                    <BiPause className="w-6 h-6" />
+                  ) : (
+                    <BiPlay className="w-6 h-6" />
+                  )}
+                  <span>{isPlaying ? 'Pausa' : 'Escuchar ahora'}</span>
                 </button>
               </div>
             </section>
 
             <section>
               <TocaExitosSection />
-            </section>
-
-            <section className="bg-[#1C1C1C] rounded-xl p-6">
-              <NewsSection />
             </section>
 
             <section className="bg-[#1C1C1C] rounded-xl p-6">
