@@ -114,13 +114,16 @@ export function EntrevistasPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                  <div className="p-4 md:p-6 text-center">
+                    <h3 className="text-base md:text-lg lg:text-xl font-bold text-white group-hover:text-primary transition-colors break-words">
                       {item.title}
                     </h3>
-                    <p className="text-gray-400 line-clamp-3">
-                      {item.description}
-                    </p>
+                    <div className="h-1 w-8 bg-primary mt-2 mx-auto transform origin-center scale-0 group-hover:scale-100 transition-transform"></div>
+                    {item.description && (
+                      <p className="text-sm md:text-base text-gray-400 mt-3 line-clamp-2 md:line-clamp-3">
+                        {item.description}
+                      </p>
+                    )}
                   </div>
                 </Link>
               </motion.article>

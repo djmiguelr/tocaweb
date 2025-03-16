@@ -86,10 +86,11 @@ export function EntrevistasSection() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-100">
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                      <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-2">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-center">
+                      <h3 className="text-base md:text-lg font-bold text-white group-hover:text-primary transition-colors break-words">
                         {item.title}
                       </h3>
+                      <div className="h-1 w-8 bg-primary mt-2 mx-auto transform origin-center scale-0 group-hover:scale-100 transition-transform"></div>
                     </div>
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center">

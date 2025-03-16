@@ -10,11 +10,10 @@ import { useHeader } from '../../context/HeaderContext';
 
 const navigation = [
   { label: 'Inicio', path: '/' },
-  { label: 'Noticias', path: '/noticias' },
   { label: 'TocaExitos', path: '/toca-exitos' },
-  { label: 'Programacion', path: '/programacion' },
   { label: 'TocaEntrevistas', path: '/entrevistas' },
-  { label: 'Contacto', path: '/contacto' }
+  { label: 'Programacion', path: '/programacion' },
+  { label: 'Live', path: '/live' }
 ];
 
 export function Header() {
@@ -97,7 +96,7 @@ export function Header() {
                     rel="noopener noreferrer"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-full transition-colors"
+                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-full transition-colors"
                   >
                     <BsWhatsapp className="w-5 h-5" />
                     <span className="text-sm font-medium">Escríbenos</span>
@@ -128,54 +127,87 @@ export function Header() {
         </div>
       </div>
 
-      {/* Menú móvil */}
+      {/* Portal para el menú móvil */}
       <AnimatePresence>
         {isMenuOpen && (
-          <>
+          <div className="fixed inset-0 z-[9999] md:hidden">
             {/* Overlay de fondo */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150]"
+              className="fixed inset-0 bg-black/90 backdrop-blur-md"
               onClick={() => setIsMenuOpen(false)}
             />
+            
             {/* Panel del menú */}
             <motion.div
-              initial={{ opacity: 0, x: '100%' }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: '100%' }}
-              transition={{ type: 'tween' }}
-              className="fixed top-0 right-0 bottom-0 w-full sm:w-80 bg-[#1C1C1C] shadow-xl z-[200] flex flex-col md:hidden"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.3 }}
+              className="fixed top-0 right-0 h-[100dvh] w-[90vw] sm:w-[400px] bg-[#1C1C1C] shadow-2xl flex flex-col"
             >
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between p-4">
-                {renderLogo()}
+              {/* Header del menú */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-white/10">
+                <div className="flex-shrink-0">
+                  <Link to="/" onClick={() => setIsMenuOpen(false)}>
+                    {renderLogo()}
+                  </Link>
+                </div>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsMenuOpen(false)}
-                  className="p-2 text-white"
+                  className="p-2 -mr-2 text-white hover:text-primary transition-colors"
                 >
-                  <BiX className="w-6 h-6" />
+                  <BiX className="w-8 h-8" />
                 </motion.button>
               </div>
 
-              <nav className="flex-1 overflow-y-auto py-4 scrollbar-hide">
-                {navigation.map((item) => (
-                  <MobileNavLink 
-                    key={item.path} 
-                    to={item.path} 
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.label}
-                  </MobileNavLink>
-                ))}
-              </nav>
-            </div>
-          </motion.div>
-          </>
+              {/* Navegación */}
+              <div className="flex-1 overflow-y-auto">
+                <nav className="py-6">
+                  {navigation.map((item) => (
+                    <MobileNavLink 
+                      key={item.path} 
+                      to={item.path} 
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.label}
+                    </MobileNavLink>
+                  ))}
+                </nav>
+              </div>
 
+              {/* Footer del menú */}
+              <div className="p-6 border-t border-white/10">
+                {selectedCity?.Redes?.map((red) => {
+                  if (red?.plataforma === 'Whatsapp' && red?.URL) {
+                    const whatsappUrl = red.URL.startsWith('+') 
+                      ? `https://wa.me/${red.URL.replace('+', '')}`
+                      : red.URL;
+                    
+                    return (
+                      <motion.a
+                        key={red.id}
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex items-center justify-center gap-3 w-full px-6 py-4 bg-primary hover:bg-primary-hover text-white rounded-xl transition-colors"
+                      >
+                        <BsWhatsapp className="w-6 h-6" />
+                        <span className="text-lg font-medium">Escríbenos por WhatsApp</span>
+                      </motion.a>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </header>
@@ -198,7 +230,7 @@ function MobileNavLink({ to, children, onClick }) {
     <Link
       to={to}
       onClick={onClick}
-      className="block px-6 py-3 text-base font-medium text-white hover:text-primary hover:bg-white/5 transition-colors"
+      className="block px-6 py-4 text-lg font-medium text-white hover:text-primary hover:bg-white/5 transition-colors"
     >
       {children}
     </Link>

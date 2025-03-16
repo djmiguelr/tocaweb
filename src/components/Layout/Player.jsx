@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BiPlay, BiPause, BiVolumeFull, BiVolumeMute, BiChevronDown } from 'react-icons/bi';
 import { MdRadio } from 'react-icons/md';
@@ -23,6 +23,38 @@ export function Player() {
   } = usePlayer();
 
   const { selectedCity } = useCity();
+  const [localVolume, setLocalVolume] = useState(volume);
+  const volumeTimeoutRef = useRef(null);
+
+  // Manejar cambios de volumen con debounce
+  const handleVolumeInputChange = useCallback((e) => {
+    const newVolume = parseFloat(e.target.value);
+    setLocalVolume(newVolume);
+    
+    // Limpiar timeout anterior si existe
+    if (volumeTimeoutRef.current) {
+      clearTimeout(volumeTimeoutRef.current);
+    }
+    
+    // Establecer nuevo timeout
+    volumeTimeoutRef.current = setTimeout(() => {
+      handleVolumeChange(newVolume);
+    }, 200); // 200ms debounce
+  }, [handleVolumeChange]);
+
+  // Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (volumeTimeoutRef.current) {
+        clearTimeout(volumeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Sincronizar volumen local cuando cambia el volumen global
+  useEffect(() => {
+    setLocalVolume(volume);
+  }, [volume]);
 
   const handleCityClick = () => {
     setShowCitySelector(prev => !prev);
@@ -97,7 +129,7 @@ export function Player() {
 
               <button
                 onClick={togglePlay}
-                disabled={isLoading || (!isLiveStream && !currentTrack?.song?.url)}
+                disabled={isLoading || (!isLiveStream && !currentTrack?.audio?.url)}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                   isLoading ? 'bg-white/5 cursor-not-allowed' : 'bg-primary hover:bg-primary-hover'
                 }`}
@@ -127,8 +159,8 @@ export function Player() {
                   min="0"
                   max="1"
                   step="0.01"
-                  value={isMuted ? 0 : volume}
-                  onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                  value={localVolume}
+                  onChange={handleVolumeInputChange}
                   className="w-24 accent-primary"
                 />
               </div>

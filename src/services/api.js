@@ -65,7 +65,7 @@ const processTocaExitos = (tocaExitos) => {
         url: getMediaUrl(item.cover),
         documentId: item.cover.documentId
       } : null,
-      song: item.song ? {
+      audio: item.song ? {
         url: getMediaUrl(item.song),
         documentId: item.song.documentId
       } : null

@@ -113,14 +113,14 @@ export function TocaExitosPage() {
           </div>
 
           {/* Rank 1 - Featured */}
-          <div className="mb-24 w-full">
+          <div className="mb-8 md:mb-24 w-full">
             <div className="relative bg-gradient-to-br from-red-500/20 via-primary/20 to-purple-500/20 rounded-[2rem] overflow-hidden p-1">
               <div className="relative bg-black/40 backdrop-blur-xl rounded-[1.85rem] overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-red-500/10 via-primary/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
-                <div className="grid lg:grid-cols-[1.2fr,1fr] gap-12 p-12">
+                <div className="grid lg:grid-cols-[1fr,1.2fr] gap-4 md:gap-12 p-4 md:p-12">
                   {/* Left side - Image and Rank */}
-                  <div className="relative aspect-square lg:aspect-auto">
+                  <div className="relative aspect-square lg:aspect-auto order-2 lg:order-1">
                     <div className="relative z-10 w-full h-full rounded-2xl overflow-hidden shadow-2xl transform group-hover:scale-[1.02] transition-transform duration-500">
                       <img
                         src={firstTrack.cover?.url}
@@ -131,30 +131,30 @@ export function TocaExitosPage() {
                     </div>
                     
                     {/* Rank Badge */}
-                    <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl flex items-center justify-center transform rotate-12 shadow-xl z-20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                      <span className="text-7xl font-bold text-white transform -rotate-12 group-hover:rotate-0 transition-transform duration-500">#1</span>
+                    <div className="absolute -bottom-4 md:-bottom-8 -right-4 md:-right-8 w-20 md:w-32 h-20 md:h-32 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl flex items-center justify-center transform rotate-12 shadow-xl z-20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                      <span className="text-4xl md:text-7xl font-bold text-white transform -rotate-12 group-hover:rotate-0 transition-transform duration-500">#1</span>
                     </div>
                   </div>
 
                   {/* Right side - Content */}
-                  <div className="flex flex-col justify-between py-6 relative z-10">
+                  <div className="flex flex-col justify-between py-1 md:py-6 relative z-10 order-1 lg:order-2">
                     <div>
-                      <div className="flex items-center gap-4 mb-8">
-                        <div className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg transform group-hover:translate-y-1 transition-transform duration-500">
-                          <span className="text-white font-semibold tracking-wide">Top Hit</span>
+                      <div className="flex items-center gap-3 mb-3 md:mb-8">
+                        <div className="px-3 md:px-6 py-1 md:py-2 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg transform group-hover:translate-y-1 transition-transform duration-500">
+                          <span className="text-xs md:text-base text-white font-semibold tracking-wide">TocaÉxitos</span>
                         </div>
                         <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-white/5" />
                       </div>
                       
-                      <h2 className="text-5xl lg:text-6xl xl:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/80 leading-tight mb-6 line-clamp-2">
+                      <h2 className="text-2xl md:text-5xl lg:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/80 leading-tight mb-2 md:mb-6 break-words">
                         {firstTrack.title}
                       </h2>
                       
-                      <p className="text-3xl lg:text-4xl text-white/80 mb-10 line-clamp-1">
+                      <p className="text-lg md:text-3xl lg:text-4xl text-white/80 mb-3 md:mb-10 break-words">
                         {firstTrack.artist}
                       </p>
                       
-                      <div className="space-y-6 text-lg text-white/60">
+                      <div className="hidden md:block space-y-4 md:space-y-6 text-base md:text-lg text-white/60">
                         <p className="flex items-center gap-3 group-hover:translate-x-2 transition-transform duration-500">
                           <span className="w-6 h-px bg-gradient-to-r from-red-500 to-primary" />
                           Canción más escuchada esta semana
@@ -162,7 +162,7 @@ export function TocaExitosPage() {
                       </div>
                     </div>
                     
-                    <div className="mt-12">
+                    <div className="mt-4 md:mt-12">
                       <TocaExitosCard
                         track={firstTrack}
                         rank={1}
@@ -177,26 +177,40 @@ export function TocaExitosPage() {
           </div>
 
           {/* Rank 2 & 3 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-12">
             {[secondTrack, thirdTrack].map((track, index) => (
-              <TocaExitosCard
+              <motion.div
                 key={track.documentId}
-                track={track}
-                rank={index + 2}
-                variant="horizontal"
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <TocaExitosCard
+                  track={track}
+                  rank={index + 2}
+                  variant="horizontal"
+                  className="hover:scale-[1.02] transition-transform duration-300"
+                />
+              </motion.div>
             ))}
           </div>
 
           {/* Rest of tracks */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4">
             {restTracks.map((track, index) => (
-              <TocaExitosCard
+              <motion.div
                 key={track.documentId}
-                track={track}
-                rank={index + 4}
-                variant="horizontal"
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (index + 2) * 0.1 }}
+              >
+                <TocaExitosCard
+                  track={track}
+                  rank={index + 4}
+                  variant="horizontal"
+                  className="hover:scale-[1.02] transition-transform duration-300"
+                />
+              </motion.div>
             ))}
           </div>
         </div>
