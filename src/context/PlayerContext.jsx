@@ -23,6 +23,7 @@ export function PlayerProvider({ children }) {
     const savedMuted = localStorage.getItem('playerMuted');
     return savedMuted === 'true';
   });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const audioRef = useRef(null);
   const hlsRef = useRef(null);
@@ -276,10 +277,10 @@ export function PlayerProvider({ children }) {
   const togglePlay = useCallback(async () => {
     console.log('Toggle play called, current state:', { isPlaying, audioRef: audioRef.current });
     
-    if (!audioRef.current) {
-      console.log('No audio element');
+    if (!audioRef.current || !audioRef.current.src) {
+      console.log('No audio element or no source, initializing stream');
       if (selectedCity) {
-        playLiveStream(selectedCity);
+        await playLiveStream(selectedCity);
       }
       return;
     }
@@ -290,13 +291,9 @@ export function PlayerProvider({ children }) {
         audioRef.current.pause();
       } else {
         console.log('Playing audio');
-        if (!audioRef.current.src && selectedCity) {
-          await playLiveStream(selectedCity);
-        } else {
-          const playPromise = audioRef.current.play();
-          if (playPromise !== undefined) {
-            await playPromise;
-          }
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
         }
       }
     } catch (error) {
@@ -311,12 +308,22 @@ export function PlayerProvider({ children }) {
     return cleanup;
   }, [cleanup]);
 
-  // Auto-play cuando se selecciona una ciudad
+  // Inicializar reproductor cuando se carga la página
   useEffect(() => {
-    if (selectedCity && isLiveStream) {
+    if (!isInitialized && selectedCity && isLiveStream) {
+      console.log('Initializing player with selected city:', selectedCity);
+      setIsInitialized(true);
       playLiveStream(selectedCity);
     }
-  }, [selectedCity, isLiveStream, playLiveStream]);
+  }, [selectedCity, isLiveStream, isInitialized, playLiveStream]);
+
+  // Auto-play cuando se cambia de ciudad
+  useEffect(() => {
+    if (isInitialized && selectedCity && isLiveStream) {
+      console.log('City changed, updating stream:', selectedCity);
+      playLiveStream(selectedCity);
+    }
+  }, [selectedCity, isLiveStream, isInitialized, playLiveStream]);
 
   const value = {
     currentTrack,
@@ -341,4 +348,4 @@ export function PlayerProvider({ children }) {
       {children}
     </PlayerContext.Provider>
   );
-}
+};

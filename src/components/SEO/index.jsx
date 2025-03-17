@@ -39,7 +39,7 @@ export const SEO = ({
       <link rel="canonical" href={canonicalUrl || fullUrl} />
       <meta name="author" content={author || 'Toca Stereo'} />
       <meta name="copyright" content={`© ${new Date().getFullYear()} Toca Stereo`} />
-      <meta name="generator" content="Toca Stereo CMS" />
+      <meta name="generator" content="Toca Stereo" />
 
       {/* Metadatos de Tiempo de Lectura y Categorización */}
       {readTime && <meta name="reading-time" content={`${readTime} minutes`} />}

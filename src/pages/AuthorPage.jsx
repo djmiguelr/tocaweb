@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAuthorBySlug, getAllAuthors } from '../services/newsApi';
 import { SEO } from '../components/SEO';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export const AuthorPage = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [author, setAuthor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,9 +44,25 @@ export const AuthorPage = () => {
 
     if (slug) {
       fetchAuthorData();
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [slug]);
+
+  const handleAuthorClick = (authorSlug) => {
+    navigate(`/autor/${authorSlug}`, { replace: true });
+  };
+
+  const handleBackClick = (e) => {
+    e.preventDefault();
+    navigate('/noticias', { replace: true });
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = parseISO(dateString);
+    if (!isValid(date)) return '';
+    return format(date, "d 'de' MMMM, yyyy", { locale: es });
+  };
 
   if (loading) {
     return (
@@ -95,15 +112,15 @@ export const AuthorPage = () => {
       <div className="min-h-screen bg-[#121212]">
         <div className="container mx-auto px-4 py-12">
           <nav className="mb-8">
-            <Link
-              to="/noticias"
+            <button
+              onClick={handleBackClick}
               className="inline-flex items-center text-primary hover:text-primary-hover transition-colors duration-200"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
               Volver a noticias
-            </Link>
+            </button>
           </nav>
           <div className="text-center max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold text-white mb-6">¡Ups! Algo salió mal</h2>
@@ -113,9 +130,9 @@ export const AuthorPage = () => {
                 <h3 className="text-xl text-white mb-6">Autores disponibles:</h3>
                 <div className="flex flex-wrap justify-center gap-4">
                   {availableAuthors.map((author) => (
-                    <Link
+                    <button
                       key={author.slug}
-                      to={`/autor/${author.slug}`}
+                      onClick={() => handleAuthorClick(author.slug)}
                       className="inline-flex items-center bg-[#1A1A1A] hover:bg-[#242424] text-primary hover:text-primary-hover px-4 py-2 rounded-full transition-all duration-200"
                     >
                       {author.avatar?.url && (
@@ -126,7 +143,7 @@ export const AuthorPage = () => {
                         />
                       )}
                       {author.name}
-                    </Link>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -156,15 +173,15 @@ export const AuthorPage = () => {
         <div className="bg-gradient-to-b from-primary/20 to-[#121212] pt-24 pb-16">
           <div className="container mx-auto px-4">
             <nav className="mb-12">
-              <Link
-                to="/noticias"
+              <button
+                onClick={handleBackClick}
                 className="inline-flex items-center text-primary hover:text-primary-hover transition-colors duration-200"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 Volver a noticias
-              </Link>
+              </button>
             </nav>
 
             <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
@@ -200,7 +217,7 @@ export const AuthorPage = () => {
               <div className="text-center max-w-2xl mx-auto">
                 <h1 className="text-5xl font-bold text-white mb-6 leading-tight">{name}</h1>
                 {bio && (
-                  <p className="text-gray-300 text-lg leading-relaxed">
+                  <p className="text-xl text-gray-400 mb-8 leading-relaxed">
                     {bio}
                   </p>
                 )}
@@ -209,48 +226,44 @@ export const AuthorPage = () => {
           </div>
         </div>
 
-        {/* News Section */}
-        <div className="container mx-auto px-4 py-16">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center border-b border-gray-800 pb-4 mb-12">
-              <h2 className="text-3xl font-bold text-white">
-                {news?.length > 0 
-                  ? `Artículos de ${name}`
-                  : `${name} aún no ha publicado artículos`
-                }
-              </h2>
-            </div>
-            
-            {news?.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {news.map((newsItem) => (
-                  <Link
-                    key={newsItem.id}
-                    to={`/noticias/${newsItem.slug}`}
-                    className="group bg-[#1A1A1A] rounded-xl overflow-hidden hover:bg-[#242424] transition-all duration-300 flex flex-col h-full transform hover:-translate-y-1 hover:shadow-2xl"
-                  >
-                    <div className="p-6 flex flex-col flex-grow">
-                      <h3 className="text-xl font-bold text-white mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-200">
-                        {newsItem.title}
-                      </h3>
-                      {newsItem.excerpt && (
-                        <p className="text-gray-400 text-sm line-clamp-2">
-                          {newsItem.excerpt}
-                        </p>
-                      )}
+        {/* Noticias del autor */}
+        {news && news.length > 0 && (
+          <div className="container mx-auto px-4 py-16">
+            <h2 className="text-3xl font-bold text-white mb-12">
+              Últimas noticias de {name}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {news.map((article) => (
+                <button
+                  key={article.id}
+                  onClick={() => navigate(`/noticias/${article.slug}`, { replace: true })}
+                  className="bg-[#1A1A1A] rounded-xl overflow-hidden hover:bg-[#242424] transition-colors duration-200 text-left"
+                >
+                  {article.featured_image?.url && (
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={article.featured_image.url.startsWith('/') ? `https://api.voltajedigital.com${article.featured_image.url}` : article.featured_image.url}
+                        alt={article.title}
+                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300"
+                      />
                     </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-[#1A1A1A] rounded-xl">
-                <p className="text-gray-400 text-lg">
-                  No hay artículos disponibles
-                </p>
-              </div>
-            )}
+                  )}
+                  <div className="p-6">
+                    <h3 className="text-xl font-semibold text-white mb-4 line-clamp-2">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-400 mb-4 line-clamp-3">
+                      {article.excerpt}
+                    </p>
+                    <time className="text-sm text-gray-500">
+                      {formatDate(article.published)}
+                    </time>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );
