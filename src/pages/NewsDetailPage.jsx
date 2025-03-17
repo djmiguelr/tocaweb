@@ -7,6 +7,7 @@ import { SEO } from '../components/SEO';
 import { SocialEmbed } from '../components/Social/SocialEmbed';
 import { ShareButtons } from '../components/Social/ShareButtons';
 import { RelatedNews } from '../components/News/RelatedNews';
+import { HeaderAd, InArticleAd, SidebarAd } from '../components/Ads/AdLayouts';
 
 export const NewsDetailPage = () => {
   const { slug } = useParams();
@@ -117,9 +118,53 @@ export const NewsDetailPage = () => {
 
     return content.map((block, index) => {
       switch (block.type) {
+        case 'heading1':
+          return (
+            <h1 key={index} className="text-4xl font-bold text-white mb-6 mt-8">
+              {block.children?.map((child, childIndex) => (
+                <React.Fragment key={childIndex}>
+                  {child.text}
+                </React.Fragment>
+              ))}
+            </h1>
+          );
+
+        case 'heading2':
+          return (
+            <h2 key={index} className="text-3xl font-bold text-white mb-5 mt-8">
+              {block.children?.map((child, childIndex) => (
+                <React.Fragment key={childIndex}>
+                  {child.text}
+                </React.Fragment>
+              ))}
+            </h2>
+          );
+
+        case 'heading3':
+          return (
+            <h3 key={index} className="text-2xl font-bold text-white mb-4 mt-6">
+              {block.children?.map((child, childIndex) => (
+                <React.Fragment key={childIndex}>
+                  {child.text}
+                </React.Fragment>
+              ))}
+            </h3>
+          );
+
+        case 'heading4':
+          return (
+            <h4 key={index} className="text-xl font-bold text-white mb-4 mt-6">
+              {block.children?.map((child, childIndex) => (
+                <React.Fragment key={childIndex}>
+                  {child.text}
+                </React.Fragment>
+              ))}
+            </h4>
+          );
+
         case 'paragraph':
           return (
-            <p key={index} className="mb-6 text-white text-lg leading-relaxed">
+            <p key={index} className="text-white text-lg leading-relaxed mb-6">
               {block.children?.map((child, childIndex) => (
                 <React.Fragment key={childIndex}>
                   {child.text}
@@ -128,13 +173,47 @@ export const NewsDetailPage = () => {
             </p>
           );
 
-        case 'code':
-          const codeContent = block.children?.map(child => child.text).join('') || '';
+        case 'quote':
           return (
-            <SocialEmbed
-              key={index}
-              content={codeContent}
-            />
+            <blockquote key={index} className="border-l-4 border-primary pl-4 my-6">
+              <p className="text-xl text-gray-300 italic">
+                {block.children?.map((child, childIndex) => (
+                  <React.Fragment key={childIndex}>
+                    {child.text}
+                  </React.Fragment>
+                ))}
+              </p>
+            </blockquote>
+          );
+
+        case 'bulleted-list':
+          return (
+            <ul key={index} className="list-disc list-inside mb-6 text-white space-y-2">
+              {block.children?.map((item, itemIndex) => (
+                <li key={itemIndex} className="text-lg">
+                  {item.children?.map((child, childIndex) => (
+                    <React.Fragment key={childIndex}>
+                      {child.text}
+                    </React.Fragment>
+                  ))}
+                </li>
+              ))}
+            </ul>
+          );
+
+        case 'numbered-list':
+          return (
+            <ol key={index} className="list-decimal list-inside mb-6 text-white space-y-2">
+              {block.children?.map((item, itemIndex) => (
+                <li key={itemIndex} className="text-lg">
+                  {item.children?.map((child, childIndex) => (
+                    <React.Fragment key={childIndex}>
+                      {child.text}
+                    </React.Fragment>
+                  ))}
+                </li>
+              ))}
+            </ol>
           );
 
         case 'image':
@@ -146,6 +225,7 @@ export const NewsDetailPage = () => {
                 src={imgUrl.startsWith('/') ? `https://api.voltajedigital.com${imgUrl}` : imgUrl}
                 alt={block.image.alternativeText || ''}
                 className="w-full h-auto rounded-lg shadow-lg"
+                loading="lazy"
               />
               {block.image.caption && (
                 <figcaption className="mt-3 text-sm text-gray-400 text-center italic">
@@ -155,7 +235,17 @@ export const NewsDetailPage = () => {
             </figure>
           );
 
+        case 'code':
+          const codeContent = block.children?.map(child => child.text).join('') || '';
+          return (
+            <SocialEmbed
+              key={index}
+              content={codeContent}
+            />
+          );
+
         default:
+          console.warn('Tipo de bloque no manejado:', block.type);
           return null;
       }
     });
@@ -183,6 +273,9 @@ export const NewsDetailPage = () => {
       
       <div className="min-h-screen bg-[#121212]">
         <div className="container mx-auto px-4 py-8">
+          {/* Header Ad */}
+          <HeaderAd />
+
           <nav className="mb-8 max-w-4xl mx-auto">
             <Link
               to="/noticias"
@@ -195,112 +288,131 @@ export const NewsDetailPage = () => {
             </Link>
           </nav>
 
-          <article className="max-w-4xl mx-auto">
-            <header className="mb-12">
-              {/* Categoría */}
-              {categoria && (
-                <Link
-                  to={`/categoria/${categoria.slug}`}
-                  className="inline-block bg-primary/20 text-primary px-4 py-1 rounded-full text-sm font-medium mb-6 hover:bg-primary/30 transition-colors duration-200"
-                >
-                  {categoria.name}
-                </Link>
-              )}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Contenido Principal */}
+            <article className="flex-grow max-w-4xl">
+              <header className="mb-12">
+                {/* Categoría */}
+                {categoria && (
+                  <Link
+                    to={`/categoria/${categoria.slug}`}
+                    className="inline-block bg-primary/20 text-primary px-4 py-1 rounded-full text-sm font-medium mb-6 hover:bg-primary/30 transition-colors duration-200"
+                  >
+                    {categoria.name}
+                  </Link>
+                )}
 
-              {/* Título */}
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-                {title}
-              </h1>
+                {/* Título */}
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                  {title}
+                </h2>
 
-              {/* Excerpt */}
-              {excerpt && (
-                <p className="text-xl text-gray-400 mb-6">
-                  {excerpt}
-                </p>
-              )}
+                {/* Excerpt */}
+                {excerpt && (
+                  <p className="text-xl text-gray-400 mb-6">
+                    {excerpt}
+                  </p>
+                )}
 
-              {/* Metadatos */}
-              <div className="flex items-center justify-between text-gray-400 text-sm">
-                <div className="flex items-center">
-                  {authorAvatar && (
-                    <img
-                      src={authorAvatar.startsWith('/') ? `https://api.voltajedigital.com${authorAvatar}` : authorAvatar}
-                      alt={authorName}
-                      className="w-10 h-10 rounded-full mr-3 object-cover"
-                    />
-                  )}
-                  <div>
-                    {authorName && authorSlug ? (
+                {/* Metadatos */}
+                <div className="flex items-center justify-between text-gray-400 text-sm">
+                  <div className="flex items-center">
+                    {authorAvatar && (
+                      <img
+                        src={authorAvatar.startsWith('/') ? `https://api.voltajedigital.com${authorAvatar}` : authorAvatar}
+                        alt={authorName}
+                        className="w-10 h-10 rounded-full mr-3 object-cover"
+                      />
+                    )}
+                    <div>
+                      {authorName && authorSlug ? (
+                        <Link
+                          to={`/autor/${authorSlug}`}
+                          className="font-medium hover:text-primary"
+                        >
+                          {authorName}
+                        </Link>
+                      ) : (
+                        authorName && <span className="font-medium">{authorName}</span>
+                      )}
+                      {published && (
+                        <div className="text-gray-500">
+                          {format(new Date(published), "d 'de' MMMM, yyyy", { locale: es })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <ShareButtons
+                    url={currentUrl}
+                    title={title}
+                    description={excerpt}
+                    image={imageUrl}
+                  />
+                </div>
+
+                {/* Imagen destacada */}
+                {imageUrl && (
+                  <div className="mt-8 -mx-4 sm:mx-0">
+                    <figure className="relative aspect-video rounded-lg overflow-hidden">
+                      <img
+                        src={imageUrl.startsWith('/') ? `https://api.voltajedigital.com${imageUrl}` : imageUrl}
+                        alt={title}
+                        className="w-full h-full object-cover"
+                      />
+                      {image_source && (
+                        <figcaption className="absolute bottom-0 right-0 bg-black/70 text-xs text-gray-300 px-3 py-1">
+                          {image_source}
+                        </figcaption>
+                      )}
+                    </figure>
+                  </div>
+                )}
+              </header>
+
+              {/* Content */}
+              <div className="prose prose-invert prose-lg max-w-none mb-12">
+                {renderContent().map((block, index) => {
+                  // Insertar anuncio cada 3 bloques de contenido
+                  if (index > 0 && index % 3 === 0) {
+                    return (
+                      <React.Fragment key={`ad-${index}`}>
+                        {block}
+                        <InArticleAd />
+                      </React.Fragment>
+                    );
+                  }
+                  return block;
+                })}
+              </div>
+
+              {/* Temas Relacionados */}
+              {tags && tags.length > 0 && (
+                <div className="mb-12">
+                  <h3 className="text-xl font-bold text-white mb-4">Temas Relacionados</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
                       <Link
-                        to={`/autor/${authorSlug}`}
-                        className="font-medium hover:text-primary"
+                        key={tag.id}
+                        to={`/tags/${tag.slug}`}
+                        className="text-sm text-gray-400 hover:text-primary bg-[#1A1A1A] px-3 py-1.5 rounded-full transition-colors duration-200"
                       >
-                        {authorName}
+                        #{tag.Nombre}
                       </Link>
-                    ) : (
-                      authorName && <span className="font-medium">{authorName}</span>
-                    )}
-                    {published && (
-                      <div className="text-gray-500">
-                        {format(new Date(published), "d 'de' MMMM, yyyy", { locale: es })}
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-                
-                <ShareButtons
-                  url={currentUrl}
-                  title={title}
-                  description={excerpt}
-                  image={imageUrl}
-                />
-              </div>
-
-              {/* Imagen destacada */}
-              {imageUrl && (
-                <div className="mt-8 -mx-4 sm:mx-0">
-                  <figure className="relative aspect-video rounded-lg overflow-hidden">
-                    <img
-                      src={imageUrl.startsWith('/') ? `https://api.voltajedigital.com${imageUrl}` : imageUrl}
-                      alt={title}
-                      className="w-full h-full object-cover"
-                    />
-                    {image_source && (
-                      <figcaption className="absolute bottom-0 right-0 bg-black/70 text-xs text-gray-300 px-3 py-1">
-                        {image_source}
-                      </figcaption>
-                    )}
-                  </figure>
-                </div>
               )}
-            </header>
 
-            {/* Content */}
-            <div className="prose prose-invert prose-lg max-w-none mb-12">
-              {renderContent()}
-            </div>
+              {/* Related News */}
+              <RelatedNews news={relatedNews} />
+            </article>
 
-            {/* Temas Relacionados */}
-            {tags && tags.length > 0 && (
-              <div className="mb-12">
-                <h3 className="text-xl font-bold text-white mb-4">Temas Relacionados</h3>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <Link
-                      key={tag.id}
-                      to={`/tags/${tag.slug}`}
-                      className="text-sm text-gray-400 hover:text-primary bg-[#1A1A1A] px-3 py-1.5 rounded-full transition-colors duration-200"
-                    >
-                      #{tag.Nombre}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Related News */}
-            <RelatedNews news={relatedNews} />
-          </article>
+            {/* Sidebar */}
+            <aside className="w-full lg:w-80">
+              <SidebarAd />
+            </aside>
+          </div>
         </div>
       </div>
     </>

@@ -4,6 +4,7 @@ import { getNewsByCategories } from '../services/newsApi';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SEO } from '../components/SEO';
+import { HeaderAd, ResponsiveAd } from '../components/Ads/AdLayouts';
 
 // Orden específico de categorías
 const CATEGORY_ORDER = ['Entretenimiento', 'Nacional', 'Deportes', 'Mundo'];
@@ -180,41 +181,58 @@ export const NewsPage = () => {
         {/* Hero Section */}
         <div className="bg-gradient-to-b from-primary/20 to-[#121212] pt-32 pb-16">
           <div className="container mx-auto px-4">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 text-center">
               Últimas Noticias
-            </h1>
+            </h2>
             <p className="text-xl text-gray-400 text-center max-w-2xl mx-auto">
               Mantente informado con las últimas noticias de música, entretenimiento y cultura
             </p>
           </div>
         </div>
 
+        {/* Header Ad */}
+        <div className="container mx-auto px-4 py-8">
+          <HeaderAd />
+        </div>
+
         {/* News Sections */}
         <div className="container mx-auto px-4 py-16">
           <div className="space-y-24">
-            {newsByCategory.map(({ category, news }) => (
-              <section key={category.id} className="space-y-8">
-                <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-                  <h2 className="text-3xl font-bold text-white">
-                    {category.name}
-                  </h2>
-                  <Link
-                    to={`/categoria/${category.slug}`}
-                    className="text-primary hover:text-primary-hover transition-colors duration-200 flex items-center group"
-                  >
-                    Ver todas
-                    <svg className="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </div>
+            {newsByCategory.map(({ category, news }, categoryIndex) => (
+              <React.Fragment key={category.id}>
+                <section className="space-y-8">
+                  <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                    <h3 className="text-3xl font-bold text-white">
+                      {category.name}
+                    </h3>
+                    <Link
+                      to={`/categoria/${category.slug}`}
+                      className="text-primary hover:text-primary-hover transition-colors duration-200 flex items-center group"
+                    >
+                      Ver más
+                      <svg
+                        className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {news.map((item) => (
-                    <NewsCard key={item.id} news={item} />
-                  ))}
-                </div>
-              </section>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {news.map((item) => (
+                      <NewsCard key={item.id} news={item} />
+                    ))}
+                  </div>
+                </section>
+
+                {/* Insertar anuncio responsivo después de cada categoría excepto la última */}
+                {categoryIndex < newsByCategory.length - 1 && (
+                  <ResponsiveAd />
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>
