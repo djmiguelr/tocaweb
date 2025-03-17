@@ -24,43 +24,17 @@ export function PlayerProvider({ children }) {
   });
 
   const audioRef = useRef(null);
-  const currentStreamUrlRef = useRef('');
-  const gainNodeRef = useRef(null);
-  const audioContextRef = useRef(null);
-  const hlsRef = useRef(null);
-
   const { selectedCity } = useCity();
-
-  // Inicializar Web Audio API
-  const initAudioContext = useCallback(() => {
-    if (!audioContextRef.current) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      audioContextRef.current = new AudioContext();
-      gainNodeRef.current = audioContextRef.current.createGain();
-      gainNodeRef.current.connect(audioContextRef.current.destination);
-    }
-  }, []);
-
-  // Conectar audio al contexto
-  const connectAudioToContext = useCallback((audioElement) => {
-    if (!audioContextRef.current) {
-      initAudioContext();
-    }
-
-    const source = audioContextRef.current.createMediaElementSource(audioElement);
-    source.connect(gainNodeRef.current);
-  }, [initAudioContext]);
 
   // Cleanup function
   const cleanup = useCallback(() => {
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
     if (audioRef.current) {
-      audioRef.current.removeAttribute('src');
+      audioRef.current.pause();
+      audioRef.current.src = '';
       audioRef.current.load();
     }
+    setIsPlaying(false);
+    setIsLoading(false);
   }, []);
 
   // Handle volume changes
@@ -82,6 +56,53 @@ export function PlayerProvider({ children }) {
     localStorage.setItem('playerMuted', newMuted);
   }, [isMuted]);
 
+  // Configurar audio element
+  const setupAudioElement = useCallback((url) => {
+    let audio = audioRef.current;
+    
+    if (!audio) {
+      audio = new Audio();
+      audioRef.current = audio;
+
+      // Configurar eventos
+      audio.addEventListener('ended', () => {
+        console.log('Audio ended');
+        setIsPlaying(false);
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('Error en reproducción:', e);
+        setError('Error en la reproducción de audio');
+        setIsPlaying(false);
+        setIsLoading(false);
+      });
+      
+      audio.addEventListener('waiting', () => {
+        console.log('Audio waiting');
+        setIsLoading(true);
+      });
+      
+      audio.addEventListener('playing', () => {
+        console.log('Audio playing');
+        setIsLoading(false);
+        setIsPlaying(true);
+      });
+
+      audio.addEventListener('pause', () => {
+        console.log('Audio paused');
+        setIsPlaying(false);
+      });
+    }
+
+    // Configurar source y propiedades
+    audio.src = url;
+    audio.volume = volume;
+    audio.muted = isMuted;
+    audio.preload = 'auto';
+
+    return audio;
+  }, [volume, isMuted]);
+
   // Play live stream
   const playLiveStream = useCallback(async (city) => {
     if (!city?.stream_url) {
@@ -93,30 +114,19 @@ export function PlayerProvider({ children }) {
       setIsLoading(true);
       setError(null);
 
-      // Crear o reutilizar elemento de audio
-      let audio = audioRef.current;
+      // Limpiar reproductor anterior
+      cleanup();
+
+      const audio = setupAudioElement(city.stream_url);
       
-      if (!audio) {
-        audio = new Audio();
-        audio.preload = 'auto';
-        audioRef.current = audio;
-      }
-
-      // Configurar source solo si es diferente
-      if (audio.src !== city.stream_url) {
-        audio.src = city.stream_url;
-      }
-
-      // Mantener el volumen actual
-      audio.volume = volume;
-      audio.muted = isMuted;
-
       try {
-        await audio.play();
-        setIsPlaying(true);
-        setIsLiveStream(true);
-        setCurrentTrack(null);
-        currentStreamUrlRef.current = city.stream_url;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          setIsLiveStream(true);
+          setCurrentTrack(null);
+        }
       } catch (error) {
         console.error('Error reproduciendo stream:', error);
         setError('Error al reproducir el audio');
@@ -129,7 +139,7 @@ export function PlayerProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [volume, isMuted]);
+  }, [cleanup, setupAudioElement]);
 
   // Play track
   const playTrack = useCallback(async (track) => {
@@ -142,30 +152,19 @@ export function PlayerProvider({ children }) {
       setIsLoading(true);
       setError(null);
 
-      // Crear o reutilizar elemento de audio
-      let audio = audioRef.current;
-      
-      if (!audio) {
-        audio = new Audio();
-        audio.preload = 'auto';
-        audioRef.current = audio;
-      }
+      // Limpiar reproductor anterior
+      cleanup();
 
-      // Configurar source solo si es diferente
-      if (audio.src !== track.audio.url) {
-        audio.src = track.audio.url;
-      }
-
-      // Mantener el volumen actual
-      audio.volume = volume;
-      audio.muted = isMuted;
+      const audio = setupAudioElement(track.audio.url);
 
       try {
-        await audio.play();
-        setIsPlaying(true);
-        setIsLiveStream(false);
-        setCurrentTrack(track);
-        currentStreamUrlRef.current = '';
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+          setIsLiveStream(false);
+          setCurrentTrack(track);
+        }
       } catch (error) {
         console.error('Error reproduciendo track:', error);
         setError('Error al reproducir el audio');
@@ -178,19 +177,27 @@ export function PlayerProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [volume, isMuted]);
+  }, [cleanup, setupAudioElement]);
 
   // Toggle play/pause
   const togglePlay = useCallback(async () => {
-    if (!audioRef.current) return;
+    console.log('Toggle play called, current state:', { isPlaying, audioRef: audioRef.current });
+    
+    if (!audioRef.current) {
+      console.log('No audio element');
+      return;
+    }
 
     try {
       if (isPlaying) {
+        console.log('Pausing audio');
         audioRef.current.pause();
-        setIsPlaying(false);
       } else {
-        await audioRef.current.play();
-        setIsPlaying(true);
+        console.log('Playing audio');
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+        }
       }
     } catch (error) {
       console.error('Error toggling play state:', error);
@@ -199,79 +206,12 @@ export function PlayerProvider({ children }) {
     }
   }, [isPlaying]);
 
-  // Configurar MediaSession
-  const updateMediaSession = useCallback(() => {
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: isLiveStream 
-          ? `${selectedCity?.name || 'Toca Stereo'} - En vivo`
-          : currentTrack?.title || '',
-        artist: isLiveStream 
-          ? selectedCity?.frequency || ''
-          : currentTrack?.artist || '',
-        artwork: [
-          {
-            src: isLiveStream
-              ? (selectedCity?.coverlog?.url || '')
-              : (currentTrack?.cover?.url || ''),
-            sizes: '512x512',
-            type: 'image/jpeg'
-          }
-        ]
-      });
-
-      navigator.mediaSession.setActionHandler('play', () => {
-        if (!isPlaying) togglePlay();
-      });
-
-      navigator.mediaSession.setActionHandler('pause', () => {
-        if (isPlaying) togglePlay();
-      });
-
-      // Actualizar el estado de reproducción
-      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
-    }
-  }, [isLiveStream, selectedCity, currentTrack, isPlaying, togglePlay]);
-
-  // Actualizar MediaSession cuando cambie el estado
-  useEffect(() => {
-    updateMediaSession();
-  }, [updateMediaSession, isLiveStream, selectedCity, currentTrack, isPlaying]);
-
-  // Configurar eventos del audio
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handlePlay = () => {
-      setIsPlaying(true);
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
-      }
-    };
-
-    const handlePause = () => {
-      setIsPlaying(false);
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'paused';
-      }
-    };
-
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-
-    return () => {
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-    };
-  }, []);
-
   // Cleanup on unmount
   useEffect(() => {
     return cleanup;
   }, [cleanup]);
 
-  // Handle city change
+  // Auto-play cuando se selecciona una ciudad
   useEffect(() => {
     if (selectedCity && isLiveStream) {
       playLiveStream(selectedCity);
@@ -289,10 +229,11 @@ export function PlayerProvider({ children }) {
     showCitySelector,
     setShowCitySelector,
     togglePlay,
+    playTrack,
+    playLiveStream,
     handleVolumeChange,
     toggleMute,
-    playLiveStream,
-    playTrack,
+    cleanup
   };
 
   return (

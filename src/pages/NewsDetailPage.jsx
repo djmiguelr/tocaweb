@@ -98,6 +98,8 @@ export const NewsDetailPage = () => {
     author,
     categoria,
     tags,
+    updated_at,
+    slug: newsSlug,
   } = news;
 
   const imageUrl = featured_image?.url;
@@ -105,7 +107,8 @@ export const NewsDetailPage = () => {
   const authorSlug = author?.slug;
   const authorAvatar = author?.avatar?.url;
   const authorBio = author?.bio;
-  const currentUrl = window.location.href;
+  const currentUrl = `https://tocastereo.co/noticias/${newsSlug}`;
+  const formattedKeywords = tags?.map(tag => tag.Nombre).join(', ');
 
   const renderContent = () => {
     if (!Array.isArray(content)) {
@@ -161,17 +164,21 @@ export const NewsDetailPage = () => {
   return (
     <>
       <SEO
-        title={news.title}
-        description={news.excerpt}
-        image={news.featured_image?.url}
-        url={`/noticias/${news.slug}`}
+        title={title}
+        description={excerpt}
+        image={imageUrl}
+        url={`/noticias/${newsSlug}`}
         type="article"
-        publishedTime={news.published}
-        modifiedTime={news.updated_at}
-        author={news.author?.name}
-        section={news.categoria?.name}
-        tags={news.tags?.map(tag => tag.Nombre)}
-        canonicalUrl={`https://tocastereo.co/noticias/${news.slug}`}
+        publishedTime={published}
+        modifiedTime={updated_at}
+        author={authorName}
+        section={categoria?.name}
+        tags={tags?.map(tag => tag.Nombre)}
+        canonicalUrl={currentUrl}
+        newsKeywords={formattedKeywords}
+        siteName="Toca Stereo"
+        twitterCard="summary_large_image"
+        category={categoria?.name}
       />
       
       <div className="min-h-screen bg-[#121212]">
@@ -190,7 +197,7 @@ export const NewsDetailPage = () => {
 
           <article className="max-w-4xl mx-auto">
             <header className="mb-12">
-              {/* 1. Categoría */}
+              {/* Categoría */}
               {categoria && (
                 <Link
                   to={`/categoria/${categoria.slug}`}
@@ -200,98 +207,112 @@ export const NewsDetailPage = () => {
                 </Link>
               )}
 
-              {/* 2. Título */}
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+              {/* Título */}
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
                 {title}
               </h1>
 
-              {/* 3. Excerpt */}
-              {excerpt && (
-                <p className="text-xl text-gray-400 mb-6">
-                  {excerpt}
-                </p>
-              )}
+              {/* Meta información */}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-white/60">
+                {/* Fecha */}
+                <time dateTime={published}>
+                  {format(new Date(published), "d 'de' MMMM, yyyy", { locale: es })}
+                </time>
 
-              {/* 4. Metadatos */}
-              <div className="flex items-center justify-between text-gray-400 text-sm">
-                <div className="flex items-center">
-                  {authorAvatar && (
-                    <img
-                      src={authorAvatar.startsWith('/') ? `https://api.voltajedigital.com${authorAvatar}` : authorAvatar}
-                      alt={authorName}
-                      className="w-10 h-10 rounded-full mr-3 object-cover"
-                    />
-                  )}
-                  <div>
-                    {authorName && authorSlug ? (
-                      <Link
-                        to={`/autor/${authorSlug}`}
-                        className="font-medium hover:text-primary"
-                      >
-                        {authorName}
-                      </Link>
-                    ) : (
-                      authorName && <span className="font-medium">{authorName}</span>
-                    )}
-                    {published && (
-                      <div className="text-gray-500">
-                        {format(new Date(published), "d 'de' MMMM, yyyy", { locale: es })}
-                      </div>
-                    )}
+                {/* Autor */}
+                {authorName && (
+                  <div className="flex items-center">
+                    <span className="mx-2">•</span>
+                    <div className="flex items-center gap-2">
+                      {authorAvatar && (
+                        <img
+                          src={authorAvatar}
+                          alt={authorName}
+                          className="w-6 h-6 rounded-full"
+                        />
+                      )}
+                      <span>{authorName}</span>
+                    </div>
                   </div>
-                </div>
-                
-                <ShareButtons
-                  url={currentUrl}
-                  title={title}
-                />
+                )}
               </div>
-
-              {/* 6. Imagen destacada */}
-              {imageUrl && (
-                <div className="mt-8 -mx-4 sm:mx-0">
-                  <figure className="relative aspect-video rounded-lg overflow-hidden">
-                    <img
-                      src={imageUrl.startsWith('/') ? `https://api.voltajedigital.com${imageUrl}` : imageUrl}
-                      alt={title}
-                      className="w-full h-full object-cover"
-                    />
-                    {image_source && (
-                      <figcaption className="absolute bottom-0 right-0 bg-black/70 text-xs text-gray-300 px-3 py-1">
-                        {image_source}
-                      </figcaption>
-                    )}
-                  </figure>
-                </div>
-              )}
             </header>
 
-            {/* Content */}
-            <div className="prose prose-invert prose-lg max-w-none mb-12">
+            {/* Imagen destacada */}
+            {imageUrl && (
+              <figure className="mb-12">
+                <img
+                  src={imageUrl}
+                  alt={title}
+                  className="w-full h-auto rounded-lg shadow-lg"
+                />
+                {image_source && (
+                  <figcaption className="mt-3 text-sm text-gray-400 text-center italic">
+                    Fuente: {image_source}
+                  </figcaption>
+                )}
+              </figure>
+            )}
+
+            {/* Botones de compartir */}
+            <div className="mb-12">
+              <ShareButtons
+                url={currentUrl}
+                title={title}
+                description={excerpt}
+                image={imageUrl}
+              />
+            </div>
+
+            {/* Contenido */}
+            <div className="prose prose-invert max-w-none">
               {renderContent()}
             </div>
 
-            {/* Temas Relacionados */}
+            {/* Tags */}
             {tags && tags.length > 0 && (
-              <div className="mb-12">
-                <h3 className="text-xl font-bold text-white mb-4">Temas Relacionados</h3>
+              <div className="mt-12 pt-8 border-t border-white/10">
+                <h2 className="text-white font-medium mb-4">Temas relacionados:</h2>
                 <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
+                  {tags.map((tag, index) => (
                     <Link
-                      key={tag.id}
-                      to={`/tags/${tag.slug}`}
-                      className="text-sm text-gray-400 hover:text-primary bg-[#1A1A1A] px-3 py-1.5 rounded-full transition-colors duration-200"
+                      key={index}
+                      to={`/tag/${tag.slug}`}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white text-sm rounded-full transition-colors duration-200"
                     >
-                      #{tag.Nombre}
+                      {tag.Nombre}
                     </Link>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Related News */}
-            <RelatedNews news={relatedNews} />
+            {/* Autor bio */}
+            {authorName && authorBio && (
+              <div className="mt-12 pt-8 border-t border-white/10">
+                <div className="flex items-start gap-4">
+                  {authorAvatar && (
+                    <img
+                      src={authorAvatar}
+                      alt={authorName}
+                      className="w-16 h-16 rounded-full"
+                    />
+                  )}
+                  <div>
+                    <h2 className="text-white font-medium mb-2">{authorName}</h2>
+                    <p className="text-white/60">{authorBio}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </article>
+
+          {/* Noticias relacionadas */}
+          {relatedNews.length > 0 && (
+            <div className="mt-16">
+              <RelatedNews news={relatedNews} />
+            </div>
+          )}
         </div>
       </div>
     </>

@@ -56,6 +56,13 @@ export function Player() {
     setLocalVolume(volume);
   }, [volume]);
 
+  const handlePlayPause = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Play/Pause button clicked');
+    togglePlay();
+  }, [togglePlay]);
+
   const handleCityClick = () => {
     setShowCitySelector(prev => !prev);
   };
@@ -128,7 +135,7 @@ export function Player() {
               )}
 
               <button
-                onClick={togglePlay}
+                onClick={handlePlayPause}
                 disabled={isLoading || (!isLiveStream && !currentTrack?.audio?.url)}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                   isLoading ? 'bg-white/5 cursor-not-allowed' : 'bg-primary hover:bg-primary-hover'
