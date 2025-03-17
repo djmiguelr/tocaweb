@@ -1,7 +1,10 @@
 export { HomePage } from './HomePage';
+export { TocaExitosPage } from './TocaExitosPage';
+export { EntrevistasPage } from './EntrevistasPage';
+export { ProgramacionPage } from './ProgramacionPage';
+export { LivePage } from './LivePage';
 export { NewsPage } from './NewsPage';
 export { NewsDetailPage } from './NewsDetailPage';
-export { EntrevistasPage } from './EntrevistasPage';
-export { EntrevistaDetailPage } from './EntrevistaDetailPage';
-export { ProgramacionPage } from './ProgramacionPage';
-// ... otras exportaciones ...
+export { AuthorPage } from './AuthorPage';
+export { CategoryPage } from './CategoryPage';
+export { TagPage } from './TagPage';

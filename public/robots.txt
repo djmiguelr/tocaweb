@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://tocastereo.co/sitemap.xml
+
+# Directorios y archivos a no indexar
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$
+
+# Permitir indexación de rutas principales
+Allow: /noticias/
+Allow: /autor/
+Allow: /categoria/
+Allow: /tag/
+
+# Crawl-delay
+Crawl-delay: 5
