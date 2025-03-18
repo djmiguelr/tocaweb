@@ -1,33 +1,47 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getFullImageUrl, getSiteUrl } from '../utils/urlUtils';
+import PropTypes from 'prop-types';
 
 export const SEO = ({ 
   title,
   description,
   type = 'website',
   image,
+  url,
   publishedTime,
   modifiedTime,
   author = 'Toca Stereo',
+  section,
   category,
   tags = [],
   duration,
-  contentType = 'default', // 'article' | 'podcast' | 'radio' | 'music' | 'default'
-  contentData = {} // Datos específicos según el tipo de contenido
+  contentType = 'default',
+  contentData = {},
+  canonicalUrl,
+  locale = 'es_CO',
+  alternateLocales = []
 }) => {
   const location = useLocation();
-  const fullUrl = getSiteUrl(location.pathname);
+  const siteUrl = getSiteUrl();
+  const pageUrl = url || `${siteUrl}${location.pathname}`;
   const defaultDescription = 'Toca Stereo - La mejor música y contenido. Escucha las mejores mezclas y mantente al día con las últimas noticias musicales.';
-  const defaultImage = getSiteUrl('/og-image.jpg');
-  const fullImage = getFullImageUrl(image) || defaultImage;
-  
+  const defaultImage = `${siteUrl}/og-image.jpg`;
+  const fullImage = image ? getFullImageUrl(image) : defaultImage;
+  const siteName = 'Toca Stereo';
+
+  // Organización base para JSON-LD
   const organizationData = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Toca Stereo",
-    "url": getSiteUrl(),
-    "logo": getSiteUrl('/logo.png'),
+    "name": siteName,
+    "url": siteUrl,
+    "logo": {
+      "@type": "ImageObject",
+      "url": `${siteUrl}/logo.png`,
+      "width": "512",
+      "height": "512"
+    },
     "sameAs": [
       "https://www.facebook.com/tocastereo",
       "https://twitter.com/tocastereo",
@@ -35,17 +49,39 @@ export const SEO = ({
     ]
   };
 
+  // Sitio web para JSON-LD
+  const websiteData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": siteName,
+    "url": siteUrl,
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `${siteUrl}/buscar?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   const generateStructuredData = () => {
-    let structuredData = [organizationData];
+    let structuredData = [organizationData, websiteData];
 
     switch (contentType) {
       case 'article':
         structuredData.push({
           "@context": "https://schema.org",
-          "@type": "Article",
+          "@type": "NewsArticle",
+          "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": pageUrl
+          },
           "headline": title,
           "description": description || defaultDescription,
-          "image": fullImage,
+          "image": {
+            "@type": "ImageObject",
+            "url": fullImage,
+            "width": "1200",
+            "height": "630"
+          },
           "author": {
             "@type": "Person",
             "name": author
@@ -53,9 +89,10 @@ export const SEO = ({
           "publisher": organizationData,
           "datePublished": publishedTime,
           "dateModified": modifiedTime || publishedTime,
-          "articleSection": category,
+          "articleSection": section || category,
           "keywords": tags.join(', '),
-          "url": fullUrl
+          "url": pageUrl,
+          "inLanguage": locale
         });
         break;
 
@@ -73,7 +110,8 @@ export const SEO = ({
             "name": author
           },
           "publisher": organizationData,
-          "url": fullUrl
+          "url": pageUrl,
+          "inLanguage": locale
         });
         break;
 
@@ -81,13 +119,14 @@ export const SEO = ({
         structuredData.push({
           "@context": "https://schema.org",
           "@type": "RadioStation",
-          "name": contentData.stationName || "Toca Stereo",
-          "url": fullUrl,
+          "name": contentData.stationName || siteName,
+          "url": pageUrl,
           "broadcastDisplayName": contentData.displayName,
           "broadcastTimezone": "America/Bogota",
           "broadcastFrequency": contentData.frequency,
           "genre": contentData.genre || "Music",
-          "image": fullImage
+          "image": fullImage,
+          "inLanguage": locale
         });
         break;
 
@@ -101,60 +140,51 @@ export const SEO = ({
             "name": contentData.artist
           },
           "duration": duration,
-          "inAlbum": contentData.album ? {
-            "@type": "MusicAlbum",
-            "name": contentData.album
-          } : undefined,
+          "inAlbum": contentData.album,
           "genre": contentData.genre,
-          "url": fullUrl,
-          "image": fullImage
+          "url": pageUrl,
+          "inLanguage": locale
         });
         break;
-
-      default:
-        structuredData.push({
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          "name": title,
-          "description": description || defaultDescription,
-          "url": fullUrl,
-          "image": fullImage,
-          "publisher": organizationData
-        });
     }
 
     return structuredData;
   };
 
   useEffect(() => {
-    // Actualizar título y meta tags
-    document.title = `${title} | Toca Stereo`;
-    
-    // Actualizar meta tags básicos
-    updateMetaTag('description', description || defaultDescription);
-    updateMetaTag('author', author);
-    updateMetaTag('keywords', tags.join(', '));
+    // Actualizar título de la página
+    document.title = `${title} | ${siteName}`;
 
-    // Open Graph
+    // Función auxiliar para actualizar meta tags
+    const updateMetaTag = (name, content) => {
+      if (!content) return;
+
+      // Eliminar meta tags existentes
+      document.querySelector(`meta[name="${name}"]`)?.remove();
+      document.querySelector(`meta[property="${name}"]`)?.remove();
+
+      const meta = document.createElement('meta');
+      if (name.startsWith('og:') || name.startsWith('article:')) {
+        meta.setAttribute('property', name);
+      } else {
+        meta.setAttribute('name', name);
+      }
+      meta.setAttribute('content', content);
+      document.head.appendChild(meta);
+    };
+
+    // Meta tags básicos
+    updateMetaTag('description', description || defaultDescription);
+    updateMetaTag('robots', 'index, follow, max-image-preview:large');
+
+    // Open Graph básico
     updateMetaTag('og:title', title);
     updateMetaTag('og:description', description || defaultDescription);
-    updateMetaTag('og:url', fullUrl);
-    updateMetaTag('og:type', type);
     updateMetaTag('og:image', fullImage);
-    if (publishedTime) {
-      updateMetaTag('og:published_time', publishedTime);
-      updateMetaTag('article:published_time', publishedTime);
-    }
-    if (modifiedTime) {
-      updateMetaTag('og:modified_time', modifiedTime);
-      updateMetaTag('article:modified_time', modifiedTime);
-    }
-    if (category) {
-      updateMetaTag('article:section', category);
-    }
-    tags.forEach((tag) => {
-      updateMetaTag('article:tag', tag);
-    });
+    updateMetaTag('og:url', pageUrl);
+    updateMetaTag('og:type', type);
+    updateMetaTag('og:site_name', siteName);
+    updateMetaTag('og:locale', locale);
 
     // Twitter Cards
     updateMetaTag('twitter:card', 'summary_large_image');
@@ -163,39 +193,91 @@ export const SEO = ({
     updateMetaTag('twitter:description', description || defaultDescription);
     updateMetaTag('twitter:image', fullImage);
 
-    // Datos estructurados JSON-LD
-    const existingScripts = document.querySelectorAll('script[type="application/ld+json"]');
-    existingScripts.forEach(script => script.remove());
-
-    const structuredData = generateStructuredData();
-    structuredData.forEach(data => {
-      const script = document.createElement('script');
-      script.type = 'application/ld+json';
-      script.text = JSON.stringify(data);
-      document.head.appendChild(script);
-    });
-
-    // Google Analytics page view
-    if (window.gtag) {
-      window.gtag('config', 'G-DWF14H7B3R', {
-        page_path: location.pathname,
-        page_title: title,
-        content_type: contentType
+    // Meta tags específicos para artículos
+    if (contentType === 'article') {
+      updateMetaTag('article:published_time', publishedTime);
+      updateMetaTag('article:modified_time', modifiedTime || publishedTime);
+      updateMetaTag('article:author', author);
+      updateMetaTag('article:section', section || category);
+      tags.forEach((tag, index) => {
+        updateMetaTag(`article:tag:${index}`, tag);
       });
     }
-  }, [title, description, type, image, location, publishedTime, modifiedTime, author, category, tags, contentType, contentData]);
+
+    // URL Canónica
+    let canonicalLink = document.querySelector('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.setAttribute('rel', 'canonical');
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.setAttribute('href', canonicalUrl || pageUrl);
+
+    // Alternate Languages
+    alternateLocales.forEach(alt => {
+      let altLink = document.querySelector(`link[hreflang="${alt.lang}"]`);
+      if (!altLink) {
+        altLink = document.createElement('link');
+        altLink.setAttribute('rel', 'alternate');
+        altLink.setAttribute('hreflang', alt.lang);
+        document.head.appendChild(altLink);
+      }
+      altLink.setAttribute('href', alt.url);
+    });
+
+    // JSON-LD
+    let scriptTag = document.querySelector('#structured-data');
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = 'structured-data';
+      scriptTag.type = 'application/ld+json';
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(generateStructuredData());
+
+  }, [
+    title,
+    description,
+    image,
+    type,
+    pageUrl,
+    publishedTime,
+    modifiedTime,
+    author,
+    section,
+    category,
+    tags,
+    contentType,
+    contentData,
+    canonicalUrl,
+    locale,
+    alternateLocales
+  ]);
 
   return null;
 };
 
-function updateMetaTag(name, content) {
-  if (!content) return;
-  
-  let meta = document.querySelector(`meta[${name.includes(':') ? 'property' : 'name'}="${name}"]`);
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute(name.includes(':') ? 'property' : 'name', name);
-    document.head.appendChild(meta);
-  }
-  meta.setAttribute('content', content);
-}
+SEO.propTypes = {
+  title: PropTypes.string.isRequired,
+  description: PropTypes.string,
+  type: PropTypes.string,
+  image: PropTypes.string,
+  url: PropTypes.string,
+  publishedTime: PropTypes.string,
+  modifiedTime: PropTypes.string,
+  author: PropTypes.string,
+  section: PropTypes.string,
+  category: PropTypes.string,
+  tags: PropTypes.arrayOf(PropTypes.string),
+  duration: PropTypes.string,
+  contentType: PropTypes.oneOf(['default', 'article', 'podcast', 'radio', 'music']),
+  contentData: PropTypes.object,
+  canonicalUrl: PropTypes.string,
+  locale: PropTypes.string,
+  alternateLocales: PropTypes.arrayOf(
+    PropTypes.shape({
+      lang: PropTypes.string.isRequired,
+      url: PropTypes.string.isRequired
+    })
+  )
+};

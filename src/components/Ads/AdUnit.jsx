@@ -25,7 +25,10 @@ export const AdUnit = ({
   }
 
   return (
-    <div className="ad-container my-6">
+    <div className="ad-container my-6 relative">
+      <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-900 text-gray-400 text-[10px] px-2 py-0.5 rounded-sm uppercase tracking-wider z-10">
+        Publicidad
+      </span>
       <ins
         ref={adRef}
         className="adsbygoogle"
