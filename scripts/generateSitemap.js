@@ -1,11 +1,10 @@
 import fs from 'fs';
 import { SitemapStream, streamToPromise } from 'sitemap';
 import { Readable } from 'stream';
-import fetch from 'node-fetch';
 
 async function fetchNewsData() {
   try {
-    const response = await fetch('https://api.voltajedigital.com/api/noticias?pagination[pageSize]=100');
+    const response = await globalThis.fetch('https://api.voltajedigital.com/api/noticias?pagination[pageSize]=100');
     const data = await response.json();
     return data.data || [];
   } catch (error) {
@@ -16,7 +15,7 @@ async function fetchNewsData() {
 
 async function fetchCategories() {
   try {
-    const response = await fetch('https://api.voltajedigital.com/api/categorias');
+    const response = await globalThis.fetch('https://api.voltajedigital.com/api/categorias');
     const data = await response.json();
     return data.data || [];
   } catch (error) {

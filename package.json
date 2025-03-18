@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate-sitemap": "node scripts/generateSitemap.js",
+    "generate-sitemap": "NODE_OPTIONS='--experimental-fetch' node scripts/generateSitemap.js",
     "postbuild": "npm run generate-sitemap"
   },
   "dependencies": {
@@ -20,7 +20,6 @@
     "framer-motion": "^11.18.2",
     "hls.js": "^1.5.20",
     "install": "^0.13.0",
-    "npm": "^11.2.0",
     "postcss": "^8.4.31",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
@@ -41,6 +40,9 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "browserslist": {
     "production": [
