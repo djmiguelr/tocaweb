@@ -19,15 +19,30 @@ app.use(express.static(distPath));
 
 // Función para obtener la URL de la imagen destacada
 const getImageUrl = (article) => {
-  const imageUrl = article.featured_image?.url;
-  if (imageUrl) {
-    // Asegurarnos de que la URL sea absoluta
-    if (imageUrl.startsWith('http')) {
-      return imageUrl;
+  if (article.featured_image) {
+    // Buscar el formato más grande disponible
+    if (article.featured_image.formats) {
+      if (article.featured_image.formats.large) {
+        const url = article.featured_image.formats.large.url;
+        return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
+      }
+      if (article.featured_image.formats.medium) {
+        const url = article.featured_image.formats.medium.url;
+        return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
+      }
+      if (article.featured_image.formats.small) {
+        const url = article.featured_image.formats.small.url;
+        return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
+      }
     }
-    // Si es una URL relativa, agregar el dominio de la API
-    return `https://api.voltajedigital.com${imageUrl}`;
+    
+    // Si no hay formatos, usar la URL original
+    if (article.featured_image.url) {
+      const url = article.featured_image.url;
+      return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
+    }
   }
+  
   // URL por defecto absoluta
   return 'https://tocastereo.co/og-image.jpg';
 };
