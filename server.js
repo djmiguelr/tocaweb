@@ -19,10 +19,15 @@ app.use(express.static(distPath));
 
 // Función para obtener la URL de la imagen destacada
 const getImageUrl = (article) => {
+  console.log('Article data:', JSON.stringify(article, null, 2));
+  
   if (article.featured_image?.url) {
     const url = article.featured_image.url;
+    console.log('Found featured image URL:', url);
     return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
   }
+  
+  console.log('No featured image found, using default');
   return 'https://tocastereo.co/og-image.jpg';
 };
 
@@ -61,11 +66,12 @@ app.get('*', async (req, res) => {
         console.log('Fetching article with slug:', slug);
         const response = await fetch(`https://api.voltajedigital.com/api/noticias?filters[slug]=${slug}`);
         const data = await response.json();
+        console.log('API Response:', JSON.stringify(data, null, 2));
         
         const article = data.data[0];
         if (article) {
           const imageUrl = getImageUrl(article);
-          console.log('Using featured image URL:', imageUrl);
+          console.log('Final image URL:', imageUrl);
 
           const metaTags = `
             <title>${article.title} | Toca Stereo</title>
