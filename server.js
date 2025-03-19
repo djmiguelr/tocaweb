@@ -59,7 +59,20 @@ app.get('*', async (req, res) => {
       const slug = req.path.split('/').pop();
       try {
         console.log('Fetching article with slug:', slug);
-        const response = await fetch(`https://api.voltajedigital.com/api/noticias?filters[slug]=${slug}`);
+        const params = new URLSearchParams({
+          'filters[slug][$eq]': slug,
+          'populate[featured_image][fields][0]': 'url',
+          'populate[author][fields][0]': 'name',
+          'populate[author][fields][1]': 'bio',
+          'populate[author][fields][2]': 'slug',
+          'populate[author][populate][avatar][fields][0]': 'url',
+          'populate[categoria][fields][0]': 'name',
+          'populate[categoria][fields][1]': 'slug',
+          'populate[tags][fields][0]': 'Nombre',
+          'populate[tags][fields][1]': 'slug'
+        });
+        
+        const response = await fetch(`https://api.voltajedigital.com/api/noticias?${params}`);
         const data = await response.json();
         
         const article = data.data[0];
