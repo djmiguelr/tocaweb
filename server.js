@@ -49,17 +49,28 @@ app.get('*', async (req, res) => {
     if (req.path.startsWith('/noticias/')) {
       const slug = req.path.split('/').pop();
       try {
+        console.log('Fetching article with slug:', slug);
         const response = await fetch(`https://api.voltajedigital.com/api/noticias?filters[slug]=${slug}`);
         const data = await response.json();
+        console.log('API Response:', JSON.stringify(data, null, 2));
+        
         const article = data.data[0];
+        console.log('Article data:', JSON.stringify(article, null, 2));
 
         if (article) {
+          console.log('Featured image data:', JSON.stringify(article.featured_image, null, 2));
+          
           // Asegurarnos de que tenemos la URL completa de la imagen
-          const imageUrl = article.featured_image?.url 
-            ? article.featured_image.url.startsWith('http') 
+          let imageUrl;
+          if (article.featured_image && article.featured_image.url) {
+            imageUrl = article.featured_image.url.startsWith('http') 
               ? article.featured_image.url 
-              : `https://api.voltajedigital.com${article.featured_image.url}`
-            : 'https://tocastereo.co/og-image.jpg';
+              : `https://api.voltajedigital.com${article.featured_image.url}`;
+            console.log('Final image URL:', imageUrl);
+          } else {
+            imageUrl = 'https://tocastereo.co/og-image.jpg';
+            console.log('Using default image URL:', imageUrl);
+          }
 
           const metaTags = `
             <title>${article.title} | Toca Stereo</title>
