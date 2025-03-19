@@ -113,10 +113,15 @@ export const NewsDetailPage = () => {
     slug: newsSlug,
   } = news;
 
-  const imageUrl = featured_image?.url;
+  const getFullUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/') ? `https://api.voltajedigital.com${url}` : url;
+  };
+
+  const imageUrl = getFullUrl(featured_image?.url);
   const authorName = author?.name;
   const authorSlug = author?.slug;
-  const authorAvatar = author?.avatar?.url;
+  const authorAvatar = getFullUrl(author?.avatar?.url);
   const authorBio = author?.bio;
   const currentUrl = `https://tocastereo.co/noticias/${newsSlug}`;
   const formattedKeywords = tags?.map(tag => tag.Nombre).join(', ');
@@ -177,38 +182,21 @@ export const NewsDetailPage = () => {
           );
 
         case 'image':
-          const getFullUrl = (url) => {
-            if (!url) return '';
-            return url.startsWith('/') ? `https://api.voltajedigital.com${url}` : url;
-          };
-
-          const formats = block.image?.formats || {};
-          const responsiveUrls = {
-            thumbnail: getFullUrl(formats.thumbnail?.url),
-            small: getFullUrl(formats.small?.url),
-            medium: getFullUrl(formats.medium?.url),
-            large: getFullUrl(formats.large?.url),
-            original: getFullUrl(block.image?.url)
-          };
+          if (!block.image?.url) return null;
+          
+          const fullImageUrl = getFullUrl(block.image.url);
           
           return (
             <figure key={index} className="my-6">
               <img
-                src={responsiveUrls.original}
-                srcSet={`
-                  ${responsiveUrls.small} 500w,
-                  ${responsiveUrls.medium} 750w,
-                  ${responsiveUrls.large} 1000w,
-                  ${responsiveUrls.original} ${block.image?.width}w
-                `}
-                sizes="(max-width: 500px) 100vw, (max-width: 750px) 100vw, (max-width: 1000px) 100vw, 100vw"
-                alt={block.image?.alternativeText || ''}
+                src={fullImageUrl}
+                alt={block.image.alternativeText || ''}
                 className="w-full h-auto rounded-lg"
-                width={block.image?.width}
-                height={block.image?.height}
+                width={block.image.width}
+                height={block.image.height}
                 loading="lazy"
               />
-              {block.image?.caption && (
+              {block.image.caption && (
                 <figcaption className="mt-2 text-sm text-gray-400 text-center">
                   {block.image.caption}
                 </figcaption>
@@ -329,7 +317,7 @@ export const NewsDetailPage = () => {
                     <div className="flex items-center">
                       {authorAvatar && (
                         <img
-                          src={authorAvatar.startsWith('/') ? `https://api.voltajedigital.com${authorAvatar}` : authorAvatar}
+                          src={authorAvatar}
                           alt={authorName}
                           className="w-10 h-10 rounded-full mr-3 object-cover"
                         />
@@ -366,7 +354,7 @@ export const NewsDetailPage = () => {
                     <div className="mt-8 -mx-4 sm:mx-0">
                       <figure className="relative aspect-video rounded-lg overflow-hidden">
                         <img
-                          src={imageUrl.startsWith('/') ? `https://api.voltajedigital.com${imageUrl}` : imageUrl}
+                          src={imageUrl}
                           alt={title}
                           className="w-full h-full object-cover"
                           loading="lazy"

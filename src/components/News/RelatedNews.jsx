@@ -6,6 +6,11 @@ import { es } from 'date-fns/locale';
 export const RelatedNews = ({ news }) => {
   if (!news || news.length === 0) return null;
 
+  const getFullUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('/') ? `https://api.voltajedigital.com${url}` : url;
+  };
+
   return (
     <div className="mt-16 border-t border-gray-800 pt-8">
       <h2 className="text-2xl font-bold text-white mb-8">Noticias Relacionadas</h2>
@@ -19,11 +24,10 @@ export const RelatedNews = ({ news }) => {
             {item.featured_image?.url && (
               <div className="relative h-48 overflow-hidden">
                 <img
-                  src={item.featured_image.url.startsWith('/') 
-                    ? `https://api.voltajedigital.com${item.featured_image.url}` 
-                    : item.featured_image.url}
+                  src={getFullUrl(item.featured_image.url)}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
                 />
                 {item.categoria && (
                   <span className="absolute top-3 left-3 bg-primary px-3 py-1 rounded-full text-xs font-medium">
