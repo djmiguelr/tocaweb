@@ -21,22 +21,26 @@ app.use(express.static(distPath));
 const getImageUrl = (article) => {
   const imageUrl = article.featured_image?.url;
   if (imageUrl) {
-    return imageUrl.startsWith('http') ? imageUrl : `https://api.voltajedigital.com${imageUrl}`;
+    // Asegurarnos de que la URL sea absoluta
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+    // Si es una URL relativa, agregar el dominio de la API
+    return `https://api.voltajedigital.com${imageUrl}`;
   }
+  // URL por defecto absoluta
   return 'https://tocastereo.co/og-image.jpg';
 };
 
 // Función para leer y modificar el HTML
 const injectMetaTags = (html, metaTags) => {
-  // Eliminar el title original
+  // Eliminar el title original y meta tags
   html = html.replace(/<title>.*?<\/title>/, '');
-  
-  // Eliminar meta tags originales de SEO
   html = html.replace(/<meta\s+name="description".*?>/g, '');
   html = html.replace(/<meta\s+property="og:.*?".*?>/g, '');
   html = html.replace(/<meta\s+name="twitter:.*?".*?>/g, '');
   
-  // Inyectar los nuevos meta tags
+  // Inyectar los nuevos meta tags antes del cierre de </head>
   return html.replace(
     '</head>',
     `${metaTags}\n</head>`
@@ -62,6 +66,7 @@ app.get('*', async (req, res) => {
         const params = new URLSearchParams({
           'filters[slug][$eq]': slug,
           'populate[featured_image][fields][0]': 'url',
+          'populate[featured_image][fields][1]': 'formats',
           'populate[author][fields][0]': 'name',
           'populate[author][fields][1]': 'bio',
           'populate[author][fields][2]': 'slug',
@@ -81,29 +86,47 @@ app.get('*', async (req, res) => {
           console.log('Using featured image URL:', imageUrl);
 
           const metaTags = `
+            <!-- Primary Meta Tags -->
             <title>${article.title} | Toca Stereo</title>
+            <meta name="title" content="${article.title} | Toca Stereo" />
             <meta name="description" content="${article.excerpt || ''}" />
-            <meta property="og:title" content="${article.title}" />
-            <meta property="og:description" content="${article.excerpt || ''}" />
+
+            <!-- Open Graph / Facebook -->
             <meta property="og:type" content="article" />
             <meta property="og:url" content="https://tocastereo.co${req.path}" />
+            <meta property="og:title" content="${article.title}" />
+            <meta property="og:description" content="${article.excerpt || ''}" />
             <meta property="og:image" content="${imageUrl}" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
             <meta property="og:site_name" content="Toca Stereo" />
             <meta property="article:published_time" content="${article.published}" />
             <meta property="article:modified_time" content="${article.updated_at || article.published}" />
             <meta property="article:section" content="${article.categoria?.name || 'Noticias'}" />
+            <meta property="article:author" content="${article.author?.name || 'Toca Stereo'}" />
+
+            <!-- Twitter -->
             <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:url" content="https://tocastereo.co${req.path}" />
             <meta name="twitter:title" content="${article.title}" />
             <meta name="twitter:description" content="${article.excerpt || ''}" />
             <meta name="twitter:image" content="${imageUrl}" />
             <meta name="twitter:site" content="@tocastereo" />
+            <meta name="twitter:creator" content="@tocastereo" />
+
+            <!-- Schema.org -->
             <script type="application/ld+json">
               {
                 "@context": "https://schema.org",
                 "@type": "NewsArticle",
                 "headline": "${article.title}",
                 "description": "${article.excerpt || ''}",
-                "image": "${imageUrl}",
+                "image": {
+                  "@type": "ImageObject",
+                  "url": "${imageUrl}",
+                  "width": "1200",
+                  "height": "630"
+                },
                 "datePublished": "${article.published}",
                 "dateModified": "${article.updated_at || article.published}",
                 "author": {
