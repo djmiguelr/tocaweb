@@ -5,18 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && npm run generate-sitemap",
     "preview": "vite preview",
     "generate-sitemap": "NODE_OPTIONS='--experimental-fetch' node scripts/generateSitemap.js",
+    "serve": "node server",
     "postbuild": "npm run generate-sitemap"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.20",
     "axios": "^1.8.3",
+    "compression": "^1.8.0",
     "date-fns": "^4.1.0",
     "dompurify": "^3.2.4",
+    "express": "^4.21.2",
     "framer-motion": "^11.18.2",
     "hls.js": "^1.5.20",
     "install": "^0.13.0",
@@ -38,7 +42,6 @@
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.1.4"
   },
   "engines": {

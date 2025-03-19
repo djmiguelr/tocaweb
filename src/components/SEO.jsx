@@ -49,211 +49,192 @@ export const SEO = ({
     ]
   };
 
-  // Sitio web para JSON-LD
-  const websiteData = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": siteName,
-    "url": siteUrl,
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": `${siteUrl}/buscar?q={search_term_string}`,
-      "query-input": "required name=search_term_string"
-    }
-  };
-
+  // Función para generar el JSON-LD según el tipo de contenido
   const generateStructuredData = () => {
-    let structuredData = [organizationData, websiteData];
-
     switch (contentType) {
       case 'article':
-        structuredData.push({
+        return {
           "@context": "https://schema.org",
           "@type": "NewsArticle",
+          "headline": title,
+          "description": description || defaultDescription,
+          "image": fullImage,
+          "datePublished": publishedTime,
+          "dateModified": modifiedTime || publishedTime,
+          "author": {
+            "@type": "Person",
+            "name": author
+          },
+          "publisher": organizationData,
           "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": pageUrl
           },
-          "headline": title,
-          "description": description || defaultDescription,
-          "image": {
-            "@type": "ImageObject",
-            "url": fullImage,
-            "width": "1200",
-            "height": "630"
-          },
-          "author": {
-            "@type": "Person",
-            "name": author
-          },
-          "publisher": organizationData,
-          "datePublished": publishedTime,
-          "dateModified": modifiedTime || publishedTime,
           "articleSection": section || category,
-          "keywords": tags.join(', '),
-          "url": pageUrl,
-          "inLanguage": locale
-        });
-        break;
-
-      case 'podcast':
-        structuredData.push({
+          "keywords": tags.join(", ")
+        };
+      case 'audio':
+        return {
           "@context": "https://schema.org",
-          "@type": "PodcastEpisode",
+          "@type": "AudioObject",
           "name": title,
           "description": description || defaultDescription,
-          "thumbnailUrl": fullImage,
-          "uploadDate": publishedTime,
           "duration": duration,
-          "author": {
-            "@type": "Person",
-            "name": author
-          },
-          "publisher": organizationData,
-          "url": pageUrl,
-          "inLanguage": locale
-        });
-        break;
-
-      case 'radio':
-        structuredData.push({
-          "@context": "https://schema.org",
-          "@type": "RadioStation",
-          "name": contentData.stationName || siteName,
-          "url": pageUrl,
-          "broadcastDisplayName": contentData.displayName,
-          "broadcastTimezone": "America/Bogota",
-          "broadcastFrequency": contentData.frequency,
-          "genre": contentData.genre || "Music",
-          "image": fullImage,
-          "inLanguage": locale
-        });
-        break;
-
-      case 'music':
-        structuredData.push({
-          "@context": "https://schema.org",
-          "@type": "MusicRecording",
-          "name": title,
-          "byArtist": {
-            "@type": "MusicGroup",
-            "name": contentData.artist
-          },
-          "duration": duration,
-          "inAlbum": contentData.album,
-          "genre": contentData.genre,
-          "url": pageUrl,
-          "inLanguage": locale
-        });
-        break;
+          "contentUrl": contentData.audioUrl,
+          "encodingFormat": "audio/mpeg"
+        };
+      default:
+        return organizationData;
     }
-
-    return structuredData;
   };
 
   useEffect(() => {
-    // Actualizar título de la página
+    // Actualizar el título del documento
     document.title = `${title} | ${siteName}`;
 
-    // Función auxiliar para actualizar meta tags
+    // Función para crear o actualizar una meta tag
     const updateMetaTag = (name, content) => {
       if (!content) return;
-
-      // Eliminar meta tags existentes
-      document.querySelector(`meta[name="${name}"]`)?.remove();
-      document.querySelector(`meta[property="${name}"]`)?.remove();
-
-      const meta = document.createElement('meta');
-      if (name.startsWith('og:') || name.startsWith('article:')) {
-        meta.setAttribute('property', name);
-      } else {
-        meta.setAttribute('name', name);
+      
+      let meta = document.querySelector(`meta[${name.startsWith('og:') ? 'property' : 'name'}="${name}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute(name.startsWith('og:') ? 'property' : 'name', name);
+        document.head.appendChild(meta);
       }
       meta.setAttribute('content', content);
-      document.head.appendChild(meta);
     };
 
-    // Meta tags básicos
-    updateMetaTag('description', description || defaultDescription);
-    updateMetaTag('robots', 'index, follow, max-image-preview:large');
+    // Función para crear o actualizar una link tag
+    const updateLinkTag = (rel, href, hreflang) => {
+      if (!href) return;
+      
+      let link = document.querySelector(`link[rel="${rel}"]${hreflang ? `[hreflang="${hreflang}"]` : ''}`);
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', rel);
+        if (hreflang) link.setAttribute('hreflang', hreflang);
+        document.head.appendChild(link);
+      }
+      link.setAttribute('href', href);
+    };
 
-    // Open Graph básico
+    // Actualizar meta tags básicos
+    updateMetaTag('description', description || defaultDescription);
+    updateMetaTag('author', author);
+    updateMetaTag('robots', 'index, follow');
+
+    // Actualizar Open Graph tags
     updateMetaTag('og:title', title);
     updateMetaTag('og:description', description || defaultDescription);
-    updateMetaTag('og:image', fullImage);
-    updateMetaTag('og:url', pageUrl);
     updateMetaTag('og:type', type);
+    updateMetaTag('og:url', pageUrl);
+    updateMetaTag('og:image', fullImage);
     updateMetaTag('og:site_name', siteName);
     updateMetaTag('og:locale', locale);
 
-    // Twitter Cards
+    // Actualizar Twitter Card tags
     updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:site', '@tocastereo');
     updateMetaTag('twitter:title', title);
     updateMetaTag('twitter:description', description || defaultDescription);
     updateMetaTag('twitter:image', fullImage);
+    updateMetaTag('twitter:site', '@tocastereo');
 
-    // Meta tags específicos para artículos
-    if (contentType === 'article') {
+    // Actualizar article tags si es necesario
+    if (type === 'article') {
       updateMetaTag('article:published_time', publishedTime);
       updateMetaTag('article:modified_time', modifiedTime || publishedTime);
       updateMetaTag('article:author', author);
-      updateMetaTag('article:section', section || category);
+      updateMetaTag('article:section', section);
       tags.forEach((tag, index) => {
-        updateMetaTag(`article:tag:${index}`, tag);
+        updateMetaTag(`article:tag`, tag);
       });
     }
 
-    // URL Canónica
-    let canonicalLink = document.querySelector('link[rel="canonical"]');
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.setAttribute('href', canonicalUrl || pageUrl);
-
-    // Alternate Languages
+    // Actualizar canonical y alternate URLs
+    updateLinkTag('canonical', canonicalUrl || pageUrl);
     alternateLocales.forEach(alt => {
-      let altLink = document.querySelector(`link[hreflang="${alt.lang}"]`);
-      if (!altLink) {
-        altLink = document.createElement('link');
-        altLink.setAttribute('rel', 'alternate');
-        altLink.setAttribute('hreflang', alt.lang);
-        document.head.appendChild(altLink);
-      }
-      altLink.setAttribute('href', alt.url);
+      updateLinkTag('alternate', alt.url, alt.locale);
     });
 
-    // JSON-LD
-    let scriptTag = document.querySelector('#structured-data');
+    // Actualizar JSON-LD
+    let scriptTag = document.querySelector('script[type="application/ld+json"]');
     if (!scriptTag) {
       scriptTag = document.createElement('script');
-      scriptTag.id = 'structured-data';
-      scriptTag.type = 'application/ld+json';
+      scriptTag.setAttribute('type', 'application/ld+json');
       document.head.appendChild(scriptTag);
     }
     scriptTag.textContent = JSON.stringify(generateStructuredData());
 
+    // Cleanup function
+    return () => {
+      // Limpiar JSON-LD
+      if (scriptTag && scriptTag.parentNode) {
+        scriptTag.parentNode.removeChild(scriptTag);
+      }
+    };
   }, [
     title,
     description,
-    image,
     type,
+    image,
     pageUrl,
     publishedTime,
     modifiedTime,
     author,
     section,
-    category,
     tags,
-    contentType,
-    contentData,
     canonicalUrl,
     locale,
-    alternateLocales
+    alternateLocales,
+    contentType,
+    contentData,
+    duration
   ]);
 
+  // Renderizar las meta tags iniciales para SSR
+  const initialMetaTags = `
+    <title>${title} | ${siteName}</title>
+    <meta name="description" content="${description || defaultDescription}" />
+    <meta name="author" content="${author}" />
+    <meta name="robots" content="index, follow" />
+    
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description || defaultDescription}" />
+    <meta property="og:type" content="${type}" />
+    <meta property="og:url" content="${pageUrl}" />
+    <meta property="og:image" content="${fullImage}" />
+    <meta property="og:site_name" content="${siteName}" />
+    <meta property="og:locale" content="${locale}" />
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description || defaultDescription}" />
+    <meta name="twitter:image" content="${fullImage}" />
+    <meta name="twitter:site" content="@tocastereo" />
+    
+    ${type === 'article' ? `
+      <meta property="article:published_time" content="${publishedTime}" />
+      <meta property="article:modified_time" content="${modifiedTime || publishedTime}" />
+      <meta property="article:author" content="${author}" />
+      <meta property="article:section" content="${section}" />
+      ${tags.map(tag => `<meta property="article:tag" content="${tag}" />`).join('\n')}
+    ` : ''}
+    
+    <link rel="canonical" href="${canonicalUrl || pageUrl}" />
+    ${alternateLocales.map(alt => `<link rel="alternate" href="${alt.url}" hreflang="${alt.locale}" />`).join('\n')}
+    
+    <script type="application/ld+json">
+      ${JSON.stringify(generateStructuredData())}
+    </script>
+  `;
+
+  // Insertar las meta tags en el documento durante el SSR
+  if (typeof document === 'undefined') {
+    return initialMetaTags;
+  }
+
+  // En el cliente, no renderizar nada visible
   return null;
 };
 
@@ -270,14 +251,14 @@ SEO.propTypes = {
   category: PropTypes.string,
   tags: PropTypes.arrayOf(PropTypes.string),
   duration: PropTypes.string,
-  contentType: PropTypes.oneOf(['default', 'article', 'podcast', 'radio', 'music']),
+  contentType: PropTypes.oneOf(['default', 'article', 'audio']),
   contentData: PropTypes.object,
   canonicalUrl: PropTypes.string,
   locale: PropTypes.string,
   alternateLocales: PropTypes.arrayOf(
     PropTypes.shape({
-      lang: PropTypes.string.isRequired,
-      url: PropTypes.string.isRequired
+      locale: PropTypes.string,
+      url: PropTypes.string
     })
   )
 };
