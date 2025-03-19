@@ -17,24 +17,12 @@ const distPath = '/var/www/tocaweb/dist';
 // Servir archivos estáticos desde el directorio dist
 app.use(express.static(distPath));
 
-// Función para obtener la URL de la imagen
+// Función para obtener la URL de la imagen destacada
 const getImageUrl = (article) => {
-  // Primero intentar usar featured_image
   if (article.featured_image?.url) {
     const url = article.featured_image.url;
     return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
   }
-
-  // Si no hay featured_image, buscar en el contenido
-  if (Array.isArray(article.content)) {
-    const imageBlock = article.content.find(block => block.type === 'image' && block.image?.url);
-    if (imageBlock?.image?.url) {
-      const url = imageBlock.image.url;
-      return url.startsWith('http') ? url : `https://api.voltajedigital.com${url}`;
-    }
-  }
-
-  // Si no se encuentra ninguna imagen, usar la imagen por defecto
   return 'https://tocastereo.co/og-image.jpg';
 };
 
@@ -77,7 +65,7 @@ app.get('*', async (req, res) => {
         const article = data.data[0];
         if (article) {
           const imageUrl = getImageUrl(article);
-          console.log('Using image URL:', imageUrl);
+          console.log('Using featured image URL:', imageUrl);
 
           const metaTags = `
             <title>${article.title} | Toca Stereo</title>
