@@ -152,8 +152,10 @@ export const SocialEmbed = ({ content }) => {
   if (!type) {
     return (
       <div className="social-embed">
-        <pre>
-          <code className="text-sm">{content}</code>
+        <pre className="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+          <code className="text-sm text-white font-mono whitespace-pre-wrap break-words">
+            {content}
+          </code>
         </pre>
       </div>
     );

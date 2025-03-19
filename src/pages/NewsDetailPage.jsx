@@ -128,48 +128,24 @@ export const NewsDetailPage = () => {
 
     return content.map((block, index) => {
       switch (block.type) {
-        case 'heading1':
+        case 'heading':
+          const HeadingTag = `h${block.level}`;
+          const headingClasses = {
+            1: 'text-4xl font-bold text-white mb-6 mt-8 leading-tight',
+            2: 'text-3xl font-bold text-white mb-5 mt-7 leading-tight',
+            3: 'text-2xl font-bold text-white mb-4 mt-6 leading-tight',
+            4: 'text-xl font-semibold text-white mb-4 mt-5 leading-tight',
+            5: 'text-lg font-semibold text-white mb-3 mt-4 leading-tight',
+            6: 'text-base font-semibold text-white mb-3 mt-4 leading-tight'
+          };
           return (
-            <h1 key={index} className="text-4xl font-bold text-white mb-6 mt-8">
+            <HeadingTag key={index} className={headingClasses[block.level]}>
               {block.children?.map((child, childIndex) => (
                 <React.Fragment key={childIndex}>
                   {child.text}
                 </React.Fragment>
               ))}
-            </h1>
-          );
-
-        case 'heading2':
-          return (
-            <h2 key={index} className="text-3xl font-bold text-white mb-5 mt-8">
-              {block.children?.map((child, childIndex) => (
-                <React.Fragment key={childIndex}>
-                  {child.text}
-                </React.Fragment>
-              ))}
-            </h2>
-          );
-
-        case 'heading3':
-          return (
-            <h3 key={index} className="text-2xl font-bold text-white mb-4 mt-6">
-              {block.children?.map((child, childIndex) => (
-                <React.Fragment key={childIndex}>
-                  {child.text}
-                </React.Fragment>
-              ))}
-            </h3>
-          );
-
-        case 'heading4':
-          return (
-            <h4 key={index} className="text-xl font-bold text-white mb-4 mt-6">
-              {block.children?.map((child, childIndex) => (
-                <React.Fragment key={childIndex}>
-                  {child.text}
-                </React.Fragment>
-              ))}
-            </h4>
+            </HeadingTag>
           );
 
         case 'paragraph':
@@ -183,6 +159,63 @@ export const NewsDetailPage = () => {
             </p>
           );
 
+        case 'list':
+          const ListTag = block.format === 'ordered' ? 'ol' : 'ul';
+          const listStyle = block.format === 'ordered' ? 'list-decimal' : 'list-disc';
+          return (
+            <ListTag key={index} className={`${listStyle} list-inside mb-6 text-white space-y-3 pl-4`}>
+              {block.children?.map((item, itemIndex) => (
+                <li key={itemIndex} className="text-lg leading-relaxed">
+                  {item.children?.map((child, childIndex) => (
+                    <React.Fragment key={childIndex}>
+                      {child.text}
+                    </React.Fragment>
+                  ))}
+                </li>
+              ))}
+            </ListTag>
+          );
+
+        case 'image':
+          const getFullUrl = (url) => {
+            if (!url) return '';
+            return url.startsWith('/') ? `https://api.voltajedigital.com${url}` : url;
+          };
+
+          const formats = block.image?.formats || {};
+          const responsiveUrls = {
+            thumbnail: getFullUrl(formats.thumbnail?.url),
+            small: getFullUrl(formats.small?.url),
+            medium: getFullUrl(formats.medium?.url),
+            large: getFullUrl(formats.large?.url),
+            original: getFullUrl(block.image?.url)
+          };
+          
+          return (
+            <figure key={index} className="my-6">
+              <img
+                src={responsiveUrls.original}
+                srcSet={`
+                  ${responsiveUrls.small} 500w,
+                  ${responsiveUrls.medium} 750w,
+                  ${responsiveUrls.large} 1000w,
+                  ${responsiveUrls.original} ${block.image?.width}w
+                `}
+                sizes="(max-width: 500px) 100vw, (max-width: 750px) 100vw, (max-width: 1000px) 100vw, 100vw"
+                alt={block.image?.alternativeText || ''}
+                className="w-full h-auto rounded-lg"
+                width={block.image?.width}
+                height={block.image?.height}
+                loading="lazy"
+              />
+              {block.image?.caption && (
+                <figcaption className="mt-2 text-sm text-gray-400 text-center">
+                  {block.image.caption}
+                </figcaption>
+              )}
+            </figure>
+          );
+
         case 'quote':
           return (
             <blockquote key={index} className="border-l-4 border-primary pl-4 my-6">
@@ -194,55 +227,6 @@ export const NewsDetailPage = () => {
                 ))}
               </p>
             </blockquote>
-          );
-
-        case 'bulleted-list':
-          return (
-            <ul key={index} className="list-disc list-inside mb-6 text-white space-y-2">
-              {block.children?.map((item, itemIndex) => (
-                <li key={itemIndex} className="text-lg">
-                  {item.children?.map((child, childIndex) => (
-                    <React.Fragment key={childIndex}>
-                      {child.text}
-                    </React.Fragment>
-                  ))}
-                </li>
-              ))}
-            </ul>
-          );
-
-        case 'numbered-list':
-          return (
-            <ol key={index} className="list-decimal list-inside mb-6 text-white space-y-2">
-              {block.children?.map((item, itemIndex) => (
-                <li key={itemIndex} className="text-lg">
-                  {item.children?.map((child, childIndex) => (
-                    <React.Fragment key={childIndex}>
-                      {child.text}
-                    </React.Fragment>
-                  ))}
-                </li>
-              ))}
-            </ol>
-          );
-
-        case 'image':
-          if (!block.image) return null;
-          const imgUrl = block.image.url;
-          return (
-            <figure key={index} className="my-12">
-              <img
-                src={imgUrl.startsWith('/') ? `https://api.voltajedigital.com${imgUrl}` : imgUrl}
-                alt={block.image.alternativeText || ''}
-                className="w-full h-auto rounded-lg shadow-lg"
-                loading="lazy"
-              />
-              {block.image.caption && (
-                <figcaption className="mt-3 text-sm text-gray-400 text-center italic">
-                  {block.image.caption}
-                </figcaption>
-              )}
-            </figure>
           );
 
         case 'code':
@@ -385,6 +369,7 @@ export const NewsDetailPage = () => {
                           src={imageUrl.startsWith('/') ? `https://api.voltajedigital.com${imageUrl}` : imageUrl}
                           alt={title}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                         {image_source && (
                           <figcaption className="absolute bottom-0 right-0 bg-black/70 text-xs text-gray-300 px-3 py-1">
