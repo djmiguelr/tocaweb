@@ -218,12 +218,88 @@ export const NewsDetailPage = () => {
           );
 
         case 'code':
-          const codeContent = block.children?.map(child => child.text).join('') || '';
+          // Procesar el contenido del bloque de código
+          let codeContent = '';
+          
+          // Si hay children, unir todos los textos
+          if (block.children && block.children.length > 0) {
+            codeContent = block.children
+              .map(child => child.text || '')
+              .join('\n')
+              .trim();
+          }
+          
+          // Si el contenido está vacío, intentar usar el código directamente
+          if (!codeContent && block.code) {
+            codeContent = block.code.trim();
+          }
+
+          // Si aún está vacío, usar el contenido completo del bloque
+          if (!codeContent && typeof block === 'string') {
+            codeContent = block.trim();
+          }
+          
+          // Limpiar el contenido de caracteres especiales y espacios innecesarios
+          codeContent = codeContent
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&quot;/g, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&amp;/g, '&')
+            .replace(/\u00A0/g, ' ') // Reemplazar espacios no rompibles
+            .replace(/\\n/g, '\n')   // Manejar saltos de línea escapados
+            .replace(/\\"/g, '"')    // Manejar comillas escapadas
+            .replace(/\\'/g, "'");   // Manejar comillas simples escapadas
+
+          // Detectar diferentes tipos de contenido social
+          const isSocialEmbed = (
+            // Twitter/X - URLs y embebidos
+            codeContent.includes('twitter.com/') ||
+            codeContent.includes('x.com/') ||
+            codeContent.includes('class="twitter-tweet"') ||
+            codeContent.includes('data-tweet-id') ||
+            
+            // Instagram - URLs y embebidos
+            codeContent.includes('instagram.com/p/') ||
+            codeContent.includes('instagram.com/reel/') ||
+            codeContent.includes('class="instagram-media"') ||
+            
+            // Facebook - URLs y embebidos
+            codeContent.includes('facebook.com/') ||
+            codeContent.includes('class="fb-post"') ||
+            codeContent.includes('data-href="https://www.facebook.com') ||
+            
+            // YouTube - URLs y embebidos
+            codeContent.includes('youtube.com/watch?v=') ||
+            codeContent.includes('youtu.be/') ||
+            (codeContent.includes('<iframe') && codeContent.includes('youtube.com/embed')) ||
+            
+            // TikTok - URLs y embebidos
+            codeContent.includes('tiktok.com/@') ||
+            codeContent.includes('class="tiktok-embed"')
+          );
+
+          console.log('Contenido del bloque:', codeContent); // Debug
+          console.log('¿Es embebido social?:', isSocialEmbed); // Debug
+
+          if (isSocialEmbed) {
+            // Envolver el contenido en un div con margen y centrado
+            return (
+              <div key={index} className="my-8 w-full flex justify-center">
+                <div className="w-full max-w-[550px]">
+                  <SocialEmbed content={codeContent} />
+                </div>
+              </div>
+            );
+          }
+          
+          // Para otros tipos de código
           return (
-            <SocialEmbed
-              key={index}
-              content={codeContent}
-            />
+            <pre key={index} className="bg-gray-800 rounded-lg p-4 overflow-x-auto my-6">
+              <code className="text-sm text-white font-mono whitespace-pre-wrap break-words">
+                {codeContent}
+              </code>
+            </pre>
           );
 
         default:

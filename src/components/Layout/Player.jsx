@@ -25,6 +25,7 @@ export function Player() {
   const { selectedCity } = useCity();
   const [localVolume, setLocalVolume] = useState(volume);
   const volumeTimeoutRef = useRef(null);
+  const audioRef = useRef(null);
 
   // Manejar cambios de volumen con debounce
   const handleVolumeInputChange = useCallback((e) => {
@@ -56,12 +57,61 @@ export function Player() {
     setLocalVolume(volume);
   }, [volume]);
 
-  const handlePlayPause = useCallback((e) => {
+  const handlePlayPauseClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     console.log('Play/Pause button clicked');
+    
+    // Obtener una nueva URL del stream con timestamp
+    const newStreamUrl = `https://stream.zeno.fm/6tuysv8nkxhvv?timestamp=${Date.now()}`;
+    
+    // Si el audio está pausado y vamos a reproducir
+    if (!isPlaying && audioRef.current) {
+      // Actualizar la URL del stream antes de reproducir
+      audioRef.current.src = newStreamUrl;
+      audioRef.current.load();
+      audioRef.current.play().catch(error => {
+        console.error('Error al reproducir:', error);
+      });
+    } else if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
     togglePlay();
-  }, [togglePlay]);
+  }, [isPlaying, togglePlay]);
+
+  // Manejar errores y reconexión automática
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleError = async (error) => {
+      console.error('Error en la reproducción:', error);
+      if (isPlaying) {
+        try {
+          // Intentar reconectar con nueva URL
+          audio.src = `https://stream.zeno.fm/6tuysv8nkxhvv?timestamp=${Date.now()}`;
+          audio.load();
+          await audio.play();
+        } catch (e) {
+          console.error('Error al reconectar:', e);
+        }
+      }
+    };
+
+    const handleStalled = () => {
+      console.log('Stream estancado, reconectando...');
+      handleError(new Error('Stream stalled'));
+    };
+
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('stalled', handleStalled);
+
+    return () => {
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('stalled', handleStalled);
+    };
+  }, [isPlaying]);
 
   const handleCityClick = () => {
     setShowCitySelector(prev => !prev);
@@ -146,7 +196,7 @@ export function Player() {
               )}
 
               <button
-                onClick={handlePlayPause}
+                onClick={handlePlayPauseClick}
                 disabled={isLoading || (!isLiveStream && !currentTrack?.audio?.url)}
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
                   isLoading 
@@ -225,6 +275,11 @@ export function Player() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <audio
+        ref={audioRef}
+        preload="none"
+      />
     </>
   );
 }
