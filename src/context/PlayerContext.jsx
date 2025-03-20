@@ -4,6 +4,33 @@ import Hls from 'hls.js';
 
 const PlayerContext = createContext();
 
+// Función auxiliar para actualizar los metadatos de Media Session
+const updateMediaSession = (data) => {
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: data.title || 'En vivo',
+      artist: data.artist || 'Toca Stereo',
+      album: data.city || 'Radio en vivo',
+      artwork: [
+        {
+          src: data.artwork || '/logo.png',
+          sizes: '512x512',
+          type: 'image/png'
+        }
+      ]
+    });
+  }
+};
+
+// Función auxiliar para configurar los controles de Media Session
+const setupMediaSessionHandlers = (handlers) => {
+  if ('mediaSession' in navigator) {
+    navigator.mediaSession.setActionHandler('play', handlers.play || null);
+    navigator.mediaSession.setActionHandler('pause', handlers.pause || null);
+    navigator.mediaSession.setActionHandler('stop', handlers.stop || null);
+  }
+};
+
 export function usePlayer() {
   return useContext(PlayerContext);
 }
@@ -46,21 +73,14 @@ export function PlayerProvider({ children }) {
 
   // Handle volume changes
   const handleVolumeChange = useCallback((newVolume) => {
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume;
-    }
     setVolume(newVolume);
     localStorage.setItem('playerVolume', newVolume);
   }, []);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
-    const newMuted = !isMuted;
-    if (audioRef.current) {
-      audioRef.current.muted = newMuted;
-    }
-    setIsMuted(newMuted);
-    localStorage.setItem('playerMuted', newMuted);
+    setIsMuted(prev => !prev);
+    localStorage.setItem('playerMuted', !isMuted);
   }, [isMuted]);
 
   // Configurar audio element
@@ -99,16 +119,89 @@ export function PlayerProvider({ children }) {
         console.log('Audio paused');
         setIsPlaying(false);
       });
+
+      // Configurar propiedades iniciales
+      audio.preload = 'auto';
+      audio.crossOrigin = 'anonymous';
     }
 
-    // Configurar source y propiedades
-    audio.volume = volume;
-    audio.muted = isMuted;
-    audio.preload = 'auto';
-    audio.crossOrigin = 'anonymous';
-
     return audio;
-  }, [volume, isMuted]);
+  }, []);
+
+  // Efecto para manejar cambios de volumen
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+  // Efecto para manejar cambios de mute
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  // Efecto para manejar los controles de Media Session
+  useEffect(() => {
+    const handlers = {
+      play: async () => {
+        try {
+          if (audioRef.current) {
+            await audioRef.current.play();
+            setIsPlaying(true);
+          }
+        } catch (error) {
+          console.error('Error playing from media session:', error);
+        }
+      },
+      pause: () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+      },
+      stop: () => {
+        cleanup();
+      }
+    };
+
+    setupMediaSessionHandlers(handlers);
+
+    return () => {
+      // Limpiar handlers al desmontar
+      setupMediaSessionHandlers({});
+    };
+  }, [cleanup]);
+
+  // Efecto para actualizar los metadatos de Media Session
+  useEffect(() => {
+    if (isPlaying) {
+      if (isLiveStream && selectedCity) {
+        updateMediaSession({
+          title: `${selectedCity.name} - En vivo`,
+          artist: selectedCity.frequency,
+          city: selectedCity.name,
+          artwork: selectedCity.coverlog?.formats?.small?.url || selectedCity.coverlog?.url
+        });
+      } else if (currentTrack) {
+        updateMediaSession({
+          title: currentTrack.title,
+          artist: currentTrack.artist,
+          artwork: currentTrack.cover?.url
+        });
+      }
+
+      // Actualizar el estado de reproducción
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'playing';
+      }
+    } else {
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
+    }
+  }, [isPlaying, isLiveStream, selectedCity, currentTrack]);
 
   // Setup HLS
   const setupHLS = useCallback((url, audio) => {
@@ -175,10 +268,20 @@ export function PlayerProvider({ children }) {
       setIsLoading(true);
       setError(null);
 
-      // Limpiar reproductor anterior
-      cleanup();
+      // Limpiar reproductor anterior si existe y es diferente URL
+      if (audioRef.current && audioRef.current.src !== city.stream_url) {
+        cleanup();
+      }
 
-      const audio = setupAudioElement(city.stream_url);
+      let audio = audioRef.current;
+      
+      // Solo crear nuevo elemento de audio si no existe
+      if (!audio) {
+        audio = setupAudioElement(city.stream_url);
+        // Aplicar volumen y mute iniciales
+        audio.volume = volume;
+        audio.muted = isMuted;
+      }
       
       // Intentar reproducir con HLS.js si es un stream .m3u8
       if (city.stream_url.includes('.m3u8')) {
@@ -216,7 +319,9 @@ export function PlayerProvider({ children }) {
       } else {
         // Stream normal (mp3, aac, etc)
         console.log('Using regular audio playback');
-        audio.src = city.stream_url;
+        if (audio.src !== city.stream_url) {
+          audio.src = city.stream_url;
+        }
         try {
           await audio.play();
           setIsPlaying(true);
@@ -235,7 +340,7 @@ export function PlayerProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, [cleanup, setupAudioElement, setupHLS]);
+  }, [cleanup, setupAudioElement, setupHLS, volume, isMuted]);
 
   // Play track
   const playTrack = useCallback(async (track) => {
