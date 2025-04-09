@@ -53,26 +53,65 @@ export const SEO = ({
   const generateStructuredData = () => {
     switch (contentType) {
       case 'article':
-        return {
+        const articleData = {
           "@context": "https://schema.org",
           "@type": "NewsArticle",
           "headline": title,
+          "name": title,
           "description": description || defaultDescription,
-          "image": fullImage,
+          "articleBody": contentData.articleBody,
+          "wordCount": contentData.wordCount,
+          "image": [
+            {
+              "@type": "ImageObject",
+              "url": fullImage,
+              "width": contentData.imageWidth || 1200,
+              "height": contentData.imageHeight || 630
+            }
+          ],
           "datePublished": publishedTime,
           "dateModified": modifiedTime || publishedTime,
           "author": {
             "@type": "Person",
-            "name": author
+            "name": author,
+            "url": contentData.authorUrl ? `${siteUrl}${contentData.authorUrl}` : undefined
           },
-          "publisher": organizationData,
+          "publisher": {
+            "@type": "Organization",
+            "name": siteName,
+            "url": siteUrl,
+            "logo": {
+              "@type": "ImageObject",
+              "url": `${siteUrl}/logo.png`,
+              "width": "512",
+              "height": "512"
+            }
+          },
           "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": pageUrl
           },
-          "articleSection": section || category,
-          "keywords": tags.join(", ")
+          "articleSection": section || category || contentData.articleSection,
+          "keywords": contentData.keywords || tags.join(", "),
+          "inLanguage": "es",
+          "copyrightYear": new Date(publishedTime).getFullYear(),
+          "copyrightHolder": {
+            "@type": "Organization",
+            "name": siteName
+          }
         };
+
+        // Agregar URL canónica si existe
+        if (canonicalUrl) {
+          articleData.url = canonicalUrl;
+        }
+
+        // Agregar thumbnailUrl si existe
+        if (contentData.thumbnailUrl) {
+          articleData.thumbnailUrl = contentData.thumbnailUrl;
+        }
+
+        return articleData;
       case 'audio':
         return {
           "@context": "https://schema.org",

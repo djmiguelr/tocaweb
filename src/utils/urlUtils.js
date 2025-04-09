@@ -9,13 +9,23 @@ export function getFullImageUrl(imageUrl) {
     return imageUrl;
   }
 
-  // Si comienza con una barra, agregarla a la URL base
+  // Si comienza con /uploads/, agregarla a la URL base
+  if (imageUrl.startsWith('/uploads/')) {
+    return `${API_BASE_URL}${imageUrl}`;
+  }
+
+  // Si comienza con uploads/, agregarla a la URL base con barra
+  if (imageUrl.startsWith('uploads/')) {
+    return `${API_BASE_URL}/${imageUrl}`;
+  }
+
+  // Si comienza con otra barra, agregarla a la URL base
   if (imageUrl.startsWith('/')) {
     return `${API_BASE_URL}${imageUrl}`;
   }
 
-  // Si no tiene barra inicial, agregarla
-  return `${API_BASE_URL}/${imageUrl}`;
+  // Para cualquier otro caso, asumimos que es una ruta relativa a /uploads/
+  return `${API_BASE_URL}/uploads/${imageUrl}`;
 }
 
 export function getSiteUrl(path = '') {

@@ -62,13 +62,8 @@ export function Player() {
     e.stopPropagation();
     console.log('Play/Pause button clicked');
     
-    // Obtener una nueva URL del stream con timestamp
-    const newStreamUrl = `https://stream.zeno.fm/6tuysv8nkxhvv?timestamp=${Date.now()}`;
-    
-    // Si el audio está pausado y vamos a reproducir
-    if (!isPlaying && audioRef.current) {
-      // Actualizar la URL del stream antes de reproducir
-      audioRef.current.src = newStreamUrl;
+    if (!isPlaying && audioRef.current && currentTrack?.audio?.url) {
+      audioRef.current.src = currentTrack.audio.url;
       audioRef.current.load();
       audioRef.current.play().catch(error => {
         console.error('Error al reproducir:', error);
@@ -78,40 +73,67 @@ export function Player() {
     }
     
     togglePlay();
-  }, [isPlaying, togglePlay]);
+  }, [isPlaying, togglePlay, currentTrack]);
 
   // Manejar errores y reconexión automática
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2 segundos
+
     const handleError = async (error) => {
       console.error('Error en la reproducción:', error);
-      if (isPlaying) {
-        try {
-          // Intentar reconectar con nueva URL
-          audio.src = `https://stream.zeno.fm/6tuysv8nkxhvv?timestamp=${Date.now()}`;
-          audio.load();
-          await audio.play();
-        } catch (e) {
-          console.error('Error al reconectar:', e);
-        }
+      
+      if (!isPlaying || !currentTrack?.audio?.url) return;
+
+      if (retryCount < maxRetries) {
+        retryCount++;
+        console.log(`Intento de reconexión ${retryCount}/${maxRetries}...`);
+
+        setTimeout(async () => {
+          try {
+            // Intentar reconectar usando la URL actual del track
+            audio.src = currentTrack.audio.url;
+            audio.load();
+            await audio.play();
+            // Si tiene éxito, resetear el contador
+            retryCount = 0;
+          } catch (e) {
+            console.error('Error al reconectar:', e);
+            if (retryCount === maxRetries) {
+              // Si alcanzamos el máximo de intentos, recargar el stream desde la API
+              playLiveStream(selectedCity);
+            }
+          }
+        }, retryDelay);
       }
     };
 
     const handleStalled = () => {
-      console.log('Stream estancado, reconectando...');
+      console.log('Stream estancado, intentando reconectar...');
       handleError(new Error('Stream stalled'));
+    };
+
+    const handleEnded = () => {
+      if (isPlaying && currentTrack?.audio?.url) {
+        console.log('Stream terminado, intentando reconectar...');
+        handleError(new Error('Stream ended'));
+      }
     };
 
     audio.addEventListener('error', handleError);
     audio.addEventListener('stalled', handleStalled);
+    audio.addEventListener('ended', handleEnded);
 
     return () => {
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('stalled', handleStalled);
+      audio.removeEventListener('ended', handleEnded);
     };
-  }, [isPlaying]);
+  }, [isPlaying, currentTrack, selectedCity, playLiveStream]);
 
   const handleCityClick = () => {
     setShowCitySelector(prev => !prev);

@@ -11,12 +11,24 @@ export const AdUnit = ({
 
   useEffect(() => {
     try {
-      if (adRef.current && window.adsbygoogle) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      const currentAd = adRef.current;
+      if (currentAd && window.adsbygoogle) {
+        // Verificar si el anuncio ya está inicializado
+        if (!currentAd.dataset.adInitialized) {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          currentAd.dataset.adInitialized = 'true';
+        }
       }
     } catch (error) {
       console.error('Error al cargar el anuncio:', error);
     }
+
+    // Cleanup function
+    return () => {
+      if (adRef.current) {
+        delete adRef.current.dataset.adInitialized;
+      }
+    };
   }, []);
 
   if (!slot) {

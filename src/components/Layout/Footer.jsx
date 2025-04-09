@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useCity } from '../../context/CityContext';
 import { useHeader } from '../../context/HeaderContext';
@@ -42,6 +43,23 @@ import {
 } from 'react-icons/bs';
 
 export function Footer() {
+  const legalLinks = [
+    { name: 'Política de Privacidad', path: '/legal/privacidad' },
+    { name: 'Términos y Condiciones', path: '/legal/terminos' },
+    { name: 'Política de Cookies', path: '/legal/cookies' },
+    { name: 'Aviso Legal', path: '/legal/aviso-legal' },
+  ];
+
+  const siteLinks = [
+    { name: 'Inicio', path: '/' },
+    { name: 'Noticias', path: '/noticias' },
+    { name: 'Programación', path: '/programacion' },
+    { name: 'Eventos', path: '/eventos' },
+    { name: 'Contacto', path: '/contacto' },
+    { name: 'Mapa del Sitio', path: '/sitemap' },
+  ];
+
+
   const { selectedCity } = useCity();
   const { headerInfo } = useHeader();
   const currentYear = new Date().getFullYear();
@@ -180,57 +198,42 @@ export function Footer() {
   };
 
   return (
-    <footer className="bg-[#1C1C1C] text-white py-12 mb-24">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Logo - ocupa 4 columnas en desktop */}
-          <div className="lg:col-span-4 flex flex-col items-center lg:items-start">
-            {headerInfo?.logo?.url ? (
-              <motion.img
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                src={headerInfo.logo.url}
-                alt={headerInfo.title}
-                className="h-20 w-auto" // Logo más grande
-              />
-            ) : (
-              <span className="text-3xl font-bold">{headerInfo?.title || 'Toca Stereo'}</span>
-            )}
+    <div className="bg-black mt-auto">
+      <footer className="text-white py-3 w-full border-t border-white/10">
+        <div className="container mx-auto px-4">
+          {/* Enlaces en dos columnas */}
+          <div className="flex justify-center mb-3">
+            {/* Enlaces de navegación */}
+            <nav className="flex flex-wrap justify-center gap-x-8">
+              {siteLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="text-sm text-white/60 hover:text-white transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+              <span className="text-white/20 mx-2">·</span>
+              {legalLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className="text-sm text-white/60 hover:text-white transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </nav>
           </div>
 
-          {/* Apps - ocupa 4 columnas en desktop */}
-          <div className="lg:col-span-4 flex flex-col items-center lg:items-start space-y-6">
-            <h3 className="text-lg font-bold text-center lg:text-left">
-              Descarga nuestra app
-            </h3>
-            <div className="w-full max-w-xs">
-              {renderAppLinks()}
-            </div>
-          </div>
-
-          {/* Redes sociales - ocupa 4 columnas en desktop */}
-          <div className="lg:col-span-4 flex flex-col items-center lg:items-start space-y-6">
-            <h3 className="text-lg font-bold text-center lg:text-left">
-              Síguenos
-            </h3>
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4">
-              {renderSocialLinks()}
-            </div>
+          {/* Copyright en línea separada */}
+          <div className="text-center">
+            <span className="text-xs text-white/40">© {currentYear} Toca Stereo - Todos los derechos reservados</span>
           </div>
         </div>
-
-        {/* Copyright */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 pt-8 border-t border-white/10 text-center"
-        >
-          <p className="text-sm text-white/60">
-            Toca Stereo {currentYear} - Todos los derechos reservados
-          </p>
-        </motion.div>
-      </div>
-    </footer>
+      </footer>
+      <div className="h-24"></div>
+    </div>
   );
 }

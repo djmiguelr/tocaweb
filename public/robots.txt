@@ -1,8 +1,9 @@
 User-agent: *
 Allow: /
 
-# Sitemap
+# Sitemaps
 Sitemap: https://tocastereo.co/sitemap.xml
+Sitemap: https://tocastereo.co/sitemaps/sitemap-news.xml
 
 # Directorios y archivos a no indexar
 Disallow: /api/

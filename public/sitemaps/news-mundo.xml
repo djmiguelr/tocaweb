@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  
+    <url>
+      <loc>https://tocastereo.co/noticias/amazon-lanzo-oferta-por-tik-tok-mientras-se-agota-el-tiempo-para-su-venta-en-ee-uu</loc>
+      <news:news>
+        <news:publication>
+          <news:name>Toca Stereo</news:name>
+          <news:language>es</news:language>
+        </news:publication>
+        <news:publication_date>2025-04-03T03:15:00.000Z</news:publication_date>
+        <news:title>Amazon lanzó oferta por TikTok mientras se agota el tiempo para su venta en EE. UU.</news:title>
+        <news:keywords>Mundo</news:keywords>
+      </news:news>
+      <lastmod>2025-04-03T04:47:21.161Z</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>
+  
+    <url>
+      <loc>https://tocastereo.co/noticias/rusia-acuerda-tregua-parcial-suspendera-ataques-a-la-energia-en-ucrania-por-30-dias</loc>
+      <news:news>
+        <news:publication>
+          <news:name>Toca Stereo</news:name>
+          <news:language>es</news:language>
+        </news:publication>
+        <news:publication_date>2025-03-18T21:30:00.000Z</news:publication_date>
+        <news:title>Rusia acuerda tregua parcial: suspenderá ataques a la energía en Ucrania por 30 días</news:title>
+        <news:keywords>Mundo</news:keywords>
+      </news:news>
+      <lastmod>2025-03-18T21:24:19.601Z</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>
+  
+    <url>
+      <loc>https://tocastereo.co/noticias/eclipse-lunar-2025-todo-lo-que-debe-saber-sobre-el-evento-que-tenira-la-luna-de-rojo</loc>
+      <news:news>
+        <news:publication>
+          <news:name>Toca Stereo</news:name>
+          <news:language>es</news:language>
+        </news:publication>
+        <news:publication_date>2025-03-14T05:30:00.000Z</news:publication_date>
+        <news:title>Eclipse lunar 2025: todo lo que debe saber sobre el evento que teñirá la Luna de rojo</news:title>
+        <news:keywords>Mundo</news:keywords>
+      </news:news>
+      <lastmod>2025-03-14T05:41:28.735Z</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>
+  
+</urlset>

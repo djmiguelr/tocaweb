@@ -8,6 +8,21 @@ export default defineConfig({
     open: true,
     hmr: {
       overlay: false
+    },
+    proxy: {
+      '/proxy': {
+        target: 'https://colombiawebs.com.co',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/proxy/, ''),
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxyReq.setHeader('Origin', 'https://colombiawebs.com.co');
+          });
+        }
+      }
     }
   },
   resolve: {

@@ -162,13 +162,24 @@ export const getNewsBySlug = async (slug) => {
 
 export const getNewsByCategory = async (categorySlug, page = 1) => {
   try {
+    const params = new URLSearchParams({
+      'filters[categoria][slug][$eq]': categorySlug,
+      'populate[featured_image][fields][0]': 'url',
+      'populate[featured_image][fields][1]': 'formats',
+      'populate[author][fields][0]': 'name',
+      'populate[author][fields][1]': 'slug',
+      'populate[author][populate][avatar][fields][0]': 'url',
+      'populate[categoria][fields][0]': 'name',
+      'populate[categoria][fields][1]': 'slug',
+      'sort[0]': 'published:desc',
+      'pagination[page]': page,
+      'pagination[pageSize]': 12
+    });
+
     const response = await api.get('/noticias', {
-      params: {
-        'filters[categoria][slug][$eq]': categorySlug,
-        'populate': '*',
-        'sort': ['published:desc'],
-        'pagination[page]': page,
-        'pagination[pageSize]': 12
+      params: params,
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`
       }
     });
 
@@ -520,13 +531,9 @@ export const getLatestNews = async () => {
     console.log('[getLatestNews] Fetching latest news');
     const response = await api.get('/noticias', {
       params: {
-        'sort[0]': 'published:desc',
-        'populate[featured_image][fields]': 'url',
-        'populate[author][fields]': 'name,slug',
-        'populate[author][populate][avatar][fields]': 'url',
-        'populate[categoria][fields]': 'name,slug',
-        'pagination[pageSize]': 4,
-        'pagination[page]': 1
+        'sort': '-published',
+        'limit': 4,
+        'page': 1
       }
     });
 

@@ -84,263 +84,242 @@ export function PlayerProvider({ children }) {
   }, [isMuted]);
 
   // Configurar audio element
-  const setupAudioElement = useCallback((url) => {
+  const setupAudioElement = useCallback(() => {
     let audio = audioRef.current;
     
     if (!audio) {
       audio = new Audio();
       audioRef.current = audio;
 
-      // Configurar eventos
-      audio.addEventListener('ended', () => {
-        console.log('Audio ended');
-        setIsPlaying(false);
-      });
-      
-      audio.addEventListener('error', (e) => {
-        console.error('Error en reproducción:', e);
-        setError('Error en la reproducción de audio');
-        setIsPlaying(false);
-        setIsLoading(false);
-      });
-      
-      audio.addEventListener('waiting', () => {
-        console.log('Audio waiting');
-        setIsLoading(true);
-      });
-      
-      audio.addEventListener('playing', () => {
-        console.log('Audio playing');
-        setIsLoading(false);
-        setIsPlaying(true);
-      });
-
-      audio.addEventListener('pause', () => {
-        console.log('Audio paused');
-        setIsPlaying(false);
-      });
-
-      // Configurar propiedades iniciales
+      // Configurar opciones de audio
       audio.preload = 'auto';
       audio.crossOrigin = 'anonymous';
-    }
-
-    return audio;
-  }, []);
-
-  // Efecto para manejar cambios de volumen
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
-  // Efecto para manejar cambios de mute
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.muted = isMuted;
-    }
-  }, [isMuted]);
-
-  // Efecto para manejar los controles de Media Session
-  useEffect(() => {
-    const handlers = {
-      play: async () => {
-        try {
-          if (audioRef.current) {
-            await audioRef.current.play();
-            setIsPlaying(true);
+      
+      // Manejar eventos de audio
+      const handlers = {
+        ended: () => setIsPlaying(false),
+        playing: () => setIsPlaying(true),
+        pause: () => setIsPlaying(false),
+        waiting: () => setIsLoading(true),
+        canplay: () => setIsLoading(false),
+        error: (e) => {
+          console.error('Error en reproducción:', e);
+          let errorMessage = 'Error en la reproducción de audio';
+          
+          if (e.target.error) {
+            switch (e.target.error.code) {
+              case MediaError.MEDIA_ERR_ABORTED:
+                errorMessage = 'La reproducción fue interrumpida';
+                break;
+              case MediaError.MEDIA_ERR_NETWORK:
+                errorMessage = 'Error de conexión. Reintentando...';
+                // Intentar reconectar
+                if (audio.src) {
+                  setTimeout(() => {
+                    audio.load();
+                    audio.play().catch((err) => {
+                      console.error('Error al reconectar:', err);
+                      setError('Error al reconectar');
+                    });
+                  }, 3000);
+                }
+                break;
+              case MediaError.MEDIA_ERR_DECODE:
+                errorMessage = 'Error al procesar el audio';
+                break;
+              case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+                errorMessage = 'Formato de audio no soportado';
+                break;
+            }
           }
-        } catch (error) {
-          console.error('Error playing from media session:', error);
-        }
-      },
-      pause: () => {
-        if (audioRef.current) {
-          audioRef.current.pause();
+          
+          setError(errorMessage);
+          setIsLoading(false);
           setIsPlaying(false);
         }
-      },
-      stop: () => {
-        cleanup();
-      }
-    };
+      };
 
-    setupMediaSessionHandlers(handlers);
+      // Agregar todos los event listeners
+      Object.entries(handlers).forEach(([event, handler]) => {
+        audio.addEventListener(event, handler);
+      });
 
-    return () => {
-      // Limpiar handlers al desmontar
-      setupMediaSessionHandlers({});
-    };
-  }, [cleanup]);
-
-  // Efecto para actualizar los metadatos de Media Session
-  useEffect(() => {
-    if (isPlaying) {
-      if (isLiveStream && selectedCity) {
-        updateMediaSession({
-          title: `${selectedCity.name} - En vivo`,
-          artist: selectedCity.frequency,
-          city: selectedCity.name,
-          artwork: selectedCity.coverlog?.formats?.small?.url || selectedCity.coverlog?.url
+      // Cleanup function para remover event listeners
+      return () => {
+        Object.entries(handlers).forEach(([event, handler]) => {
+          audio?.removeEventListener(event, handler);
         });
-      } else if (currentTrack) {
-        updateMediaSession({
-          title: currentTrack.title,
-          artist: currentTrack.artist,
-          artwork: currentTrack.cover?.url
-        });
-      }
-
-      // Actualizar el estado de reproducción
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'playing';
-      }
-    } else {
-      if ('mediaSession' in navigator) {
-        navigator.mediaSession.playbackState = 'paused';
-      }
+      };
     }
-  }, [isPlaying, isLiveStream, selectedCity, currentTrack]);
 
-  // Setup HLS
+    audio.volume = isMuted ? 0 : volume;
+    return audio;
+  }, [volume, isMuted]);
+
+  // Configurar HLS
   const setupHLS = useCallback((url, audio) => {
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-    }
-
     const hls = new Hls({
+      debug: false,
       enableWorker: true,
       lowLatencyMode: true,
-      backBufferLength: 90,
-      maxBufferLength: 30,
-      maxMaxBufferLength: 600,
-      maxBufferSize: 60 * 1000 * 1000,
-      maxBufferHole: 0.5,
-      liveSyncDurationCount: 3,
-      liveMaxLatencyDurationCount: 10,
-      liveDurationInfinity: true,
-      highBufferWatchdogPeriod: 2,
-      nudgeOffset: 0.2,
-    });
-
-    hls.attachMedia(audio);
-    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-      console.log('HLS Media attached');
-      hls.loadSource(url);
-    });
-
-    hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      console.log('HLS Manifest parsed');
+      backBufferLength: 90
     });
 
     hls.on(Hls.Events.ERROR, (event, data) => {
       if (data.fatal) {
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
-            console.error('HLS Network Error:', data);
+            console.error('Error de red en HLS:', data);
             hls.startLoad();
             break;
           case Hls.ErrorTypes.MEDIA_ERROR:
-            console.error('HLS Media Error:', data);
+            console.error('Error de medio en HLS:', data);
             hls.recoverMediaError();
             break;
           default:
-            console.error('HLS Fatal Error:', data);
+            console.error('Error fatal en HLS:', data);
             cleanup();
             break;
         }
       }
     });
 
-    hlsRef.current = hls;
     return hls;
   }, [cleanup]);
+
+  // Procesar URL del stream
+  const processStreamUrl = useCallback((url) => {
+    if (!url) return null;
+    return url; // Usar la URL del stream directamente
+  }, []);
+
+  // Reproducir stream
+  const playStream = useCallback(async () => {
+    try {
+      if (!audioRef.current) {
+        throw new Error('No se encontró el elemento de audio');
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      // Asegurarse de que el audio esté cargado
+      await new Promise((resolve, reject) => {
+        const onCanPlay = () => {
+          audioRef.current.removeEventListener('canplay', onCanPlay);
+          audioRef.current.removeEventListener('error', onError);
+          resolve();
+        };
+
+        const onError = (e) => {
+          audioRef.current.removeEventListener('canplay', onCanPlay);
+          audioRef.current.removeEventListener('error', onError);
+          reject(e);
+        };
+
+        audioRef.current.addEventListener('canplay', onCanPlay);
+        audioRef.current.addEventListener('error', onError);
+
+        // Si ya está cargado, resolver inmediatamente
+        if (audioRef.current.readyState >= 3) {
+          onCanPlay();
+        } else {
+          audioRef.current.load();
+        }
+      });
+
+      // Configurar el volumen antes de reproducir
+      audioRef.current.volume = isMuted ? 0 : volume;
+
+      // Intentar reproducir
+      await audioRef.current.play();
+      setIsPlaying(true);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error al reproducir stream:', error);
+      setError('Error al reproducir el audio');
+      setIsPlaying(false);
+      setIsLoading(false);
+      throw error;
+    }
+  }, [volume, isMuted]);
 
   // Play live stream
   const playLiveStream = useCallback(async (city) => {
     if (!city?.stream_url) {
-      setError('Esta ciudad no tiene transmisión en vivo disponible');
+      setError('Esta ciudad no tiene stream disponible');
       return;
     }
 
     try {
       setIsLoading(true);
       setError(null);
+      cleanup();
 
-      // Limpiar reproductor anterior si existe y es diferente URL
-      if (audioRef.current && audioRef.current.src !== city.stream_url) {
-        cleanup();
+      const processedUrl = processStreamUrl(city.stream_url);
+      if (!processedUrl) {
+        throw new Error('URL de stream inválida');
       }
 
-      let audio = audioRef.current;
+      const audio = setupAudioElement();
       
-      // Solo crear nuevo elemento de audio si no existe
-      if (!audio) {
-        audio = setupAudioElement(city.stream_url);
-        // Aplicar volumen y mute iniciales
-        audio.volume = volume;
-        audio.muted = isMuted;
-      }
-      
-      // Intentar reproducir con HLS.js si es un stream .m3u8
-      if (city.stream_url.includes('.m3u8')) {
+      // Si es HLS y está soportado
+      if (processedUrl.includes('.m3u8')) {
         if (Hls.isSupported()) {
-          console.log('Using HLS.js for playback');
-          const hls = setupHLS(city.stream_url, audio);
-          
-          try {
-            await audio.play();
-            setIsPlaying(true);
-            setIsLiveStream(true);
-            setCurrentTrack(null);
-          } catch (error) {
-            console.error('Error reproduciendo HLS stream:', error);
-            setError('Error al reproducir el audio');
-            setIsPlaying(false);
-          }
+          const hls = setupHLS(processedUrl, audio);
+          hls.loadSource(processedUrl);
+          hls.attachMedia(audio);
+          hlsRef.current = hls;
+
+          await new Promise((resolve, reject) => {
+            const onManifestParsed = async () => {
+              try {
+                await playStream();
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
+            };
+
+            const onError = (event, data) => {
+              if (data.fatal) {
+                reject(new Error('Error fatal de HLS'));
+              }
+            };
+
+            hls.once(Hls.Events.MANIFEST_PARSED, onManifestParsed);
+            hls.once(Hls.Events.ERROR, onError);
+          });
         } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-          console.log('Using native HLS playback');
-          audio.src = city.stream_url;
-          try {
-            await audio.play();
-            setIsPlaying(true);
-            setIsLiveStream(true);
-            setCurrentTrack(null);
-          } catch (error) {
-            console.error('Error reproduciendo native HLS:', error);
-            setError('Error al reproducir el audio');
-            setIsPlaying(false);
-          }
+          audio.src = processedUrl;
+          await playStream();
         } else {
-          setError('Tu navegador no soporta la reproducción de este stream');
-          return;
+          throw new Error('HLS no soportado');
         }
       } else {
-        // Stream normal (mp3, aac, etc)
-        console.log('Using regular audio playback');
-        if (audio.src !== city.stream_url) {
-          audio.src = city.stream_url;
-        }
-        try {
-          await audio.play();
-          setIsPlaying(true);
-          setIsLiveStream(true);
-          setCurrentTrack(null);
-        } catch (error) {
-          console.error('Error reproduciendo stream:', error);
-          setError('Error al reproducir el audio');
-          setIsPlaying(false);
-        }
+        audio.src = processedUrl;
+        await playStream();
       }
+
+      setIsPlaying(true);
+      setIsLiveStream(true);
+      setCurrentTrack(null);
+
+      // Actualizar metadatos
+      updateMediaSession({
+        title: 'En vivo',
+        artist: 'Toca Stereo',
+        city: city.name
+      });
+
     } catch (error) {
-      console.error('Error general:', error);
-      setError('Error al inicializar la transmisión');
+      console.error('Error al inicializar stream:', error);
+      setError(error.message || 'Error al inicializar la transmisión');
       setIsPlaying(false);
     } finally {
       setIsLoading(false);
     }
-  }, [cleanup, setupAudioElement, setupHLS, volume, isMuted]);
+  }, [cleanup, setupAudioElement, setupHLS, processStreamUrl, playStream]);
 
   // Play track
   const playTrack = useCallback(async (track) => {
@@ -352,24 +331,18 @@ export function PlayerProvider({ children }) {
     try {
       setIsLoading(true);
       setError(null);
-
-      // Limpiar reproductor anterior
       cleanup();
 
-      const audio = setupAudioElement(track.audio.url);
+      const audio = setupAudioElement();
       audio.src = track.audio.url;
+      audio.volume = isMuted ? 0 : volume;
 
-      try {
-        await audio.play();
-        setIsPlaying(true);
-        setIsLiveStream(false);
-        setCurrentTrack(track);
-      } catch (error) {
-        console.error('Error reproduciendo track:', error);
-        setError('Error al reproducir el audio');
-        setIsPlaying(false);
-      }
+      await audio.play();
+      setIsPlaying(true);
+      setIsLiveStream(false);
+      setCurrentTrack(track);
     } catch (error) {
+      setError('Error al reproducir la canción');
       console.error('Error general:', error);
       setError('Error al inicializar la reproducción');
       setIsPlaying(false);
@@ -380,33 +353,26 @@ export function PlayerProvider({ children }) {
 
   // Toggle play/pause
   const togglePlay = useCallback(async () => {
-    console.log('Toggle play called, current state:', { isPlaying, audioRef: audioRef.current });
-    
-    if (!audioRef.current || !audioRef.current.src) {
-      console.log('No audio element or no source, initializing stream');
-      if (selectedCity) {
-        await playLiveStream(selectedCity);
-      }
-      return;
-    }
-
     try {
-      if (isPlaying) {
-        console.log('Pausing audio');
-        audioRef.current.pause();
-      } else {
-        console.log('Playing audio');
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          await playPromise;
+      if (!audioRef.current || !audioRef.current.src) {
+        if (selectedCity) {
+          await playLiveStream(selectedCity);
         }
+        return;
+      }
+
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        await playStream();
       }
     } catch (error) {
       console.error('Error toggling play state:', error);
-      setError('Error al reproducir el audio');
+      setError(error.message || 'Error al reproducir el audio');
       setIsPlaying(false);
     }
-  }, [isPlaying, selectedCity, playLiveStream]);
+  }, [isPlaying, selectedCity, playLiveStream, playStream]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -453,4 +419,4 @@ export function PlayerProvider({ children }) {
       {children}
     </PlayerContext.Provider>
   );
-};
+}

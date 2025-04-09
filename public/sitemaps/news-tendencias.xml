@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  
+    <url>
+      <loc>https://tocastereo.co/noticias/dejo-el-alcohol-por-un-ano-y-su-cambio-fisico-fue-impactante-me-transformo-la-vida</loc>
+      <news:news>
+        <news:publication>
+          <news:name>Toca Stereo</news:name>
+          <news:language>es</news:language>
+        </news:publication>
+        <news:publication_date>2025-04-08T00:50:00.000Z</news:publication_date>
+        <news:title>Dejó el alcohol por un año y su cambio físico fue impactante: “Me transformó la vida”</news:title>
+        <news:keywords>Tendencia</news:keywords>
+      </news:news>
+      <lastmod>2025-04-09T06:08:43.589Z</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>
+  
+    <url>
+      <loc>https://tocastereo.co/noticias/recolector-de-basura-hallo-a-un-bebe-en-un-contenedor-y-protagonizo-un-heroico-rescate</loc>
+      <news:news>
+        <news:publication>
+          <news:name>Toca Stereo</news:name>
+          <news:language>es</news:language>
+        </news:publication>
+        <news:publication_date>2025-04-04T23:00:00.000Z</news:publication_date>
+        <news:title>Recolector de basura halló a un bebé en un contenedor y protagonizó un heroico rescate</news:title>
+        <news:keywords>Tendencia</news:keywords>
+      </news:news>
+      <lastmod>2025-04-09T06:08:58.860Z</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>
+  
+    <url>
+      <loc>https://tocastereo.co/noticias/ia-ensena-el-truco-para-ahorrar-un-millon-en-30-dias-sin-complicarte-la-vida</loc>
+      <news:news>
+        <news:publication>
+          <news:name>Toca Stereo</news:name>
+          <news:language>es</news:language>
+        </news:publication>
+        <news:publication_date>2025-03-21T11:00:00.000Z</news:publication_date>
+        <news:title>IA enseña el truco para ahorrar un millón en 30 días sin complicarte la vida</news:title>
+        <news:keywords>Tendencia</news:keywords>
+      </news:news>
+      <lastmod>2025-04-09T06:09:18.147Z</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>0.8</priority>
+    </url>
+  
+</urlset>

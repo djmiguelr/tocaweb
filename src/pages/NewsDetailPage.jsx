@@ -7,7 +7,7 @@ import { SEO } from '../components/SEO';
 import { SocialEmbed } from '../components/Social/SocialEmbed';
 import { ShareButtons } from '../components/Social/ShareButtons';
 import { RelatedNews } from '../components/News/RelatedNews';
-import { HeaderAd, InArticleAd, SidebarAd } from '../components/Ads/AdLayouts';
+// import { HeaderAd, InArticleAd, SidebarAd } from '../components/Ads/AdLayouts';
 
 export const NewsDetailPage = () => {
   const { slug } = useParams();
@@ -112,6 +112,15 @@ export const NewsDetailPage = () => {
     updated_at,
     slug: newsSlug,
   } = news;
+
+  // Preparar keywords para SEO
+  const keywords = [
+    categoria?.name,
+    ...(tags?.map(tag => tag.Nombre) || []),
+    'noticias',
+    'Toca Stereo',
+    'actualidad'
+  ].filter(Boolean).join(', ');
 
   const getFullUrl = (url) => {
     if (!url) return '';
@@ -314,17 +323,30 @@ export const NewsDetailPage = () => {
       <SEO
         title={title}
         description={excerpt}
-        image={imageUrl}
-        url={`/noticias/${newsSlug}`}
         type="article"
+        image={imageUrl}
+        url={currentUrl}
         publishedTime={published}
         modifiedTime={updated_at}
         author={authorName}
         section={categoria?.name}
-        tags={tags?.map(tag => tag.Nombre)}
+        tags={tags?.map(tag => tag.Nombre) || []}
+        contentType="article"
+        contentData={{
+          articleBody: typeof content === 'string' ? content.replace(/<[^>]*>/g, '') : '',
+          articleSection: categoria?.name,
+          wordCount: typeof content === 'string' ? content.replace(/<[^>]*>/g, '').split(/\s+/).length : 0,
+          authorUrl: authorSlug ? `/autor/${authorSlug}` : undefined,
+          imageWidth: featured_image?.width || 1200,
+          imageHeight: featured_image?.height || 630,
+          thumbnailUrl: featured_image?.formats?.thumbnail?.url
+            ? getFullUrl(featured_image.formats.thumbnail.url)
+            : undefined,
+          keywords: keywords
+        }}
         canonicalUrl={currentUrl}
-        newsKeywords={formattedKeywords}
-        siteName="Toca Stereo"
+        locale="es_CO"
+        alternateLocales={[]}
         twitterCard="summary_large_image"
         category={categoria?.name}
       />
@@ -333,7 +355,7 @@ export const NewsDetailPage = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Header Ad */}
           <div className="w-full max-w-7xl mx-auto mb-8">
-            <HeaderAd />
+            {/* <HeaderAd /> */}
           </div>
 
           {/* Breadcrumb - Centered */}
@@ -453,7 +475,7 @@ export const NewsDetailPage = () => {
                       return (
                         <React.Fragment key={`ad-${index}`}>
                           {block}
-                          <InArticleAd />
+                          {/* <InArticleAd /> */}
                         </React.Fragment>
                       );
                     }
@@ -486,7 +508,7 @@ export const NewsDetailPage = () => {
               {/* Sidebar */}
               <aside className="w-full lg:w-80 lg:sticky lg:top-8 lg:h-fit">
                 <div className="sticky top-8">
-                  <SidebarAd />
+                  {/* <SidebarAd /> */}
                 </div>
               </aside>
             </div>

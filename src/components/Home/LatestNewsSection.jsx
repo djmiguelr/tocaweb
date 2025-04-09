@@ -1,0 +1,103 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
+
+export function LatestNewsSection() {
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const params = new URLSearchParams({
+          'sort[0]': 'published:desc',
+          'pagination[limit]': '4',
+          'populate[featured_image][fields][0]': 'url',
+          'populate[featured_image][fields][1]': 'formats',
+          'populate[categoria][fields][0]': 'name',
+          'populate[categoria][fields][1]': 'slug',
+        });
+
+        const response = await fetch(`https://api.voltajedigital.com/api/noticias?${params}`);
+        if (!response.ok) throw new Error('Error al cargar las noticias');
+        
+        const data = await response.json();
+        setNews(data.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-[#2A2A2A] rounded-xl p-4 animate-pulse">
+            <div className="aspect-video rounded-lg bg-gray-700 mb-4" />
+            <div className="space-y-2">
+              <div className="h-4 bg-gray-700 rounded w-3/4" />
+              <div className="h-4 bg-gray-700 rounded w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error al cargar las noticias</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {news.map((article) => {
+        const imageUrl = article.featured_image?.formats?.large?.url || 
+                        article.featured_image?.formats?.medium?.url ||
+                        article.featured_image?.formats?.small?.url ||
+                        article.featured_image?.url ||
+                        '/placeholder-news.jpg';
+        
+        const fullImageUrl = imageUrl.startsWith('http') 
+          ? imageUrl 
+          : `https://api.voltajedigital.com${imageUrl}`;
+
+        return (
+          <Link
+            key={article.id}
+            to={`/noticias/${article.slug}`}
+            className="group bg-[#2A2A2A] rounded-xl p-4 hover:bg-[#333333] transition-all duration-300 ease-out transform hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30"
+          >
+            <div className="relative aspect-video rounded-lg overflow-hidden mb-4">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-300" />
+              <img
+                src={fullImageUrl}
+                alt={article.title}
+                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute bottom-3 left-3 right-3 z-20">
+                <span className="inline-block px-3 py-1 bg-primary text-white text-xs font-medium rounded-full transform translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out">
+                  {article.categoria?.name || 'Noticias'}
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-white group-hover:text-primary transition-colors duration-300 line-clamp-2">
+                {article.title}
+              </h3>
+              <p className="text-sm text-gray-400 line-clamp-2">
+                {DOMPurify.sanitize(article.excerpt || '', { ALLOWED_TAGS: [] })}
+              </p>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}

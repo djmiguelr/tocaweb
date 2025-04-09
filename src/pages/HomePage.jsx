@@ -3,12 +3,14 @@ import { usePlayer } from '../context/PlayerContext';
 import { TocaExitosSection } from '../components/Home/TocaExitosSection';
 import { Link } from 'react-router-dom';
 import { BiPlay, BiPause } from 'react-icons/bi';
-import { MainSlider } from '../components/Home/MainSlider';
 import { memo } from 'react';
 import { EntrevistasSection } from '../components/Home/EntrevistasSection';
 import { LocutoresSection } from '../components/Home/LocutoresSection';
 import { SEO } from '../components/SEO';
-import { NewsSection } from '../components/News/NewsSection';
+import { NewsSlider } from '../components/Home/NewsSlider';
+import { EntertainmentNewsSection } from '../components/Home/EntertainmentNewsSection';
+import { LatestNewsSection } from '../components/Home/LatestNewsSection';
+import { TrendingNewsSection } from '../components/Home/TrendingNewsSection';
 
 const HomePageComponent = memo(function HomePageComponent() {
   const { selectedCity, isLoading, error } = useCity();
@@ -32,39 +34,7 @@ const HomePageComponent = memo(function HomePageComponent() {
       />
       
       <div className="container mx-auto px-4 pt-24 md:pt-28 pb-8 space-y-8 relative z-0">
-        <MainSlider />
-
-        {/* Sección de Noticias */}
-        <section className="w-full py-16">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-white">
-                Últimas Noticias
-              </h2>
-              <Link
-                to="/noticias"
-                className="text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-2"
-              >
-                Ver todas
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </Link>
-            </div>
-            
-            <NewsSection />
-          </div>
-        </section>
+        <NewsSlider />
 
         {!selectedCity ? (
           <div className="bg-[#1C1C1C] rounded-xl p-6 text-center">
@@ -105,12 +75,90 @@ const HomePageComponent = memo(function HomePageComponent() {
               </div>
             </section>
 
+            <section className="bg-[#1C1C1C] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white">Últimas Noticias</h2>
+                <Link
+                  to="/noticias"
+                  className="text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-2"
+                >
+                  Ver más
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
+              </div>
+              <LatestNewsSection />
+            </section>
+
             <section>
               <TocaExitosSection />
             </section>
 
             <section className="bg-[#1C1C1C] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white">Entretenimiento</h2>
+                <Link
+                  to="/noticias?categoria=entretenimiento"
+                  className="text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-2"
+                >
+                  Ver más
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
+              </div>
+              <EntertainmentNewsSection />
+            </section>
+
+            <section className="bg-[#1C1C1C] rounded-xl p-6">
               <EntrevistasSection />
+            </section>
+
+            <section className="bg-[#1C1C1C] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-white">Tendencias</h2>
+                <Link
+                  to="/noticias?sort=views:desc"
+                  className="text-primary hover:text-primary-hover transition-colors inline-flex items-center gap-2"
+                >
+                  Ver más
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </Link>
+              </div>
+              <TrendingNewsSection />
             </section>
 
             <section className="bg-[#1C1C1C] rounded-xl p-6">

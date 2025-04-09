@@ -4,7 +4,7 @@ import { getNewsByCategories } from '../services/newsApi';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { SEO } from '../components/SEO';
-import { HeaderAd, ResponsiveAd } from '../components/Ads/AdLayouts';
+// import { HeaderAd, ResponsiveAd } from '../components/Ads/AdLayouts';
 
 // Orden específico de categorías
 const CATEGORY_ORDER = ['Entretenimiento', 'Nacional', 'Deportes', 'Mundo'];
@@ -192,7 +192,7 @@ export const NewsPage = () => {
 
         {/* Header Ad */}
         <div className="container mx-auto px-4 py-8">
-          <HeaderAd />
+          {/* <HeaderAd /> */}
         </div>
 
         {/* News Sections */}
@@ -229,9 +229,8 @@ export const NewsPage = () => {
                 </section>
 
                 {/* Insertar anuncio responsivo después de cada categoría excepto la última */}
-                {categoryIndex < newsByCategory.length - 1 && (
-                  <ResponsiveAd />
-                )}
+                {/* Anuncio responsivo después de cada categoría excepto la última */}
+                {/* {categoryIndex < newsByCategory.length - 1 && <ResponsiveAd />} */}
               </React.Fragment>
             ))}
           </div>
